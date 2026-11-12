@@ -29,7 +29,8 @@ struct EncounterResolutionView: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            // idiots resolution bar
+            
+            // idiots bar shrunk
             HStack(spacing: 10) {
                 ForEach(Array(game.teammates.enumerated()), id: \.element.id) { index, mate in
                     CompactIdiotStatusPill(
@@ -59,9 +60,10 @@ struct EncounterResolutionView: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
             
-            // idiot vs bonk
+            // main content: idiots v bonk
             HStack(spacing: 14) {
-                // LEFT: idiot
+                
+                // LEFT: active idiot
                 ZStack {
                     Image(activeTeammate.fullBodyImageName)
                         .resizable()
@@ -105,7 +107,7 @@ struct EncounterResolutionView: View {
                 }
                 .frame(maxWidth: .infinity)
                 
-                // CENTER: reveal card
+                // CENTER: 3D flipping reveal cards
                 HStack(spacing: 12) {
                     FlippableRevealCard(
                         header: "Their move",
@@ -118,9 +120,10 @@ struct EncounterResolutionView: View {
                     FlippableRevealCard(
                         header: "Your response",
                         title: activeTeammate.assignedCard?.rawValue ?? "Do Nothing",
-                        subtitle: responseDescription(for: activeTeammate.assignedCard),
+                        subtitle: "",
                         accentColor: Color.purple.opacity(0.2),
-                        isFlipped: game.cardsFlipped
+                        isFlipped: game.cardsFlipped,
+                        imageName: (activeTeammate.assignedCard ?? .doNothing).imageName
                     )
                 }
                 
@@ -149,7 +152,7 @@ struct EncounterResolutionView: View {
             }
             .padding(.horizontal, 16)
             
-            // resolution text and next button
+            // next bitton
             HStack(spacing: 12) {
                 Text(game.resolutionBannerText)
                     .font(.system(size: 14, weight: .bold, design: .serif))
@@ -172,22 +175,14 @@ struct EncounterResolutionView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
-                    .background(Color.green)
-                    .cornerRadius(20)
+                    .background(darkBrown)
+                    .cornerRadius(4)
                     .overlay(RoundedRectangle(cornerRadius: 20).stroke(darkBrown, lineWidth: 1.5))
                     .shadow(radius: 2)
                 }
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 10)
-        }
-    }
-    
-    private func responseDescription(for card: HealerCard?) -> String {
-        switch card {
-        case .heal: return "Heal designated ally for 1 HP"
-        case .reverse: return "Redirect their move"
-        case .doNothing, .none: return "Save energy"
         }
     }
 }
@@ -235,6 +230,7 @@ struct FlippableRevealCard: View {
     let subtitle: String
     let accentColor: Color
     let isFlipped: Bool
+    var imageName: String? = nil
     
     let darkBrown = Color(red: 0.35, green: 0.23, blue: 0.18)
     
@@ -246,27 +242,35 @@ struct FlippableRevealCard: View {
             
             ZStack {
                 if isFlipped {
-                    VStack(spacing: 6) {
-                        Text(title)
-                            .font(.system(size: 14, weight: .black, design: .serif))
-                            .foregroundColor(darkBrown)
-                            .multilineTextAlignment(.center)
-                            .minimumScaleFactor(0.7)
-                        
-                        Divider()
-                        
-                        Text(subtitle)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(darkBrown)
-                            .multilineTextAlignment(.center)
-                            .minimumScaleFactor(0.7)
+                    if let imageName = imageName {
+                        Image(imageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 125, height: 155)
+                            .shadow(color: .black.opacity(0.2), radius: 3, y: 2)
+                    } else {
+                        VStack(spacing: 6) {
+                            Text(title)
+                                .font(.system(size: 14, weight: .black, design: .serif))
+                                .foregroundColor(darkBrown)
+                                .multilineTextAlignment(.center)
+                                .minimumScaleFactor(0.7)
+                            
+                            Divider()
+                            
+                            Text(subtitle)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(darkBrown)
+                                .multilineTextAlignment(.center)
+                                .minimumScaleFactor(0.7)
+                        }
+                        .padding(10)
+                        .frame(width: 125, height: 155)
+                        .background(Color.white)
+                        .overlay(RoundedRectangle(cornerRadius: 12).fill(accentColor))
+                        .cornerRadius(12)
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(darkBrown, lineWidth: 2))
                     }
-                    .padding(10)
-                    .frame(width: 125, height: 155)
-                    .background(Color.white)
-                    .overlay(RoundedRectangle(cornerRadius: 12).fill(accentColor))
-                    .cornerRadius(12)
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(darkBrown, lineWidth: 2))
                 } else {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(red: 0.55, green: 0.42, blue: 0.35))
@@ -289,4 +293,10 @@ struct FlippableRevealCard: View {
             )
         }
     }
+}
+
+#Preview {
+    EncounterResolutionView()
+        .environmentObject(GameManager())
+        .background(Color(red: 252 / 255, green: 220 / 255, blue: 187 / 255))
 }

@@ -29,13 +29,12 @@ struct GameBoardView: View {
                         
                         // LEFT COLUMN: encounter label + Idiots row + healer cards
                         VStack(spacing: 0) {
-                            Text("ENCOUNTER")
+                            Text("Assign Your Healer Cards")
                                 .font(.headline)
-                                .foregroundColor(.white)
+                                .foregroundColor(.black)
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 8)
-                                .background(Color.gray)
-                                .padding(.top, 10)
+                                .padding(.top, 12)
                             
                             Spacer(minLength: 5)
                             
@@ -58,48 +57,34 @@ struct GameBoardView: View {
                             )
                             .padding(.horizontal, 10)
                             
-                            Spacer(minLength: 5)
+                            Spacer(minLength: 4)
                             
-                            Divider().background(Color.brown).padding(.horizontal)
                             
                             // healer 'your cards' hand row
-                            HStack(spacing: 8) {
+                            HStack(spacing: 120) {
                                 VStack {
                                     Image("healer card")
                                         .resizable()
                                         .scaledToFit()
-                                        .scaleEffect(1.8)
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                      .layoutPriority(-1)
-                                         .zIndex(-1)
+                                        .scaleEffect(2)
+                                        .offset(x:64)
+                                        .frame(width: 100, height: 100)      .zIndex(-1)
                                 }
-                                
-                                HStack(spacing: 8) {
-                                    ForEach(game.availableCards, id: \.self) { card in
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color.white)
-                                            .frame(width: 70, height: 90)
-                                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.brown, lineWidth: 2))
-                                            .overlay(
-                                                Text(card.rawValue)
-                                                    .font(.caption)
-                                                    .minimumScaleFactor(0.5)
-                                                    .multilineTextAlignment(.center)
-                                                    .padding(4)
-                                            )
-                                            .draggable(card.rawValue)
-                                    }
-                                }
-                                .frame(minWidth: 230, minHeight: 95)
-                                
-                                Text("Drag one card\nonto each idiot's\nresponse slot")
-                                    .font(.caption2)
-                                    .multilineTextAlignment(.center)
-                                    .foregroundColor(.brown)
+                                //healer cards
+                                HStack(spacing:4) {
+                                  ForEach(game.availableCards, id: \.self) { card in
+                                   Image(card.imageName)
+                                      .resizable()
+                                      .scaledToFit()
+                                       .frame(height: 120)
+                                       .shadow(color: .black.opacity(0.2), radius: 8, y: 1)
+                                       .draggable(card.rawValue)
+                                                                    }
+                                                                }
+                                .frame(minHeight: 95)
+                                Spacer()
                             }
-                            .padding(10)
                             .frame(maxWidth: .infinity)
-                            .background(Color(red: 235/255, green: 205/255, blue: 165/255))
                             .contentShape(Rectangle())
                             .dropDestination(for: String.self) { items, _ in
                                 guard let rawCard = items.first,
@@ -111,28 +96,28 @@ struct GameBoardView: View {
                                 return true
                             }
                         }
-                        .frame(width: geometry.size.width * 0.65)
+                        .frame(width: geometry.size.width * 0.80)
                         
                         // RIGHT COLUMN: BONK section
                         VStack(spacing: 20) {
                             VStack(spacing: 5) {
-                                Text("BONK")
-                                    .font(.system(size: 36, weight: .black, design: .serif))
-                                    .foregroundColor(Color(red: 0.4, green: 0.2, blue: 0.1))
+                                
                                 
                                 Text("\(max(0, game.bonkHP)) / 5 HP")
                                     .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 30)
-                                    .padding(.vertical, 5)
-                                    .background(Color.red.cornerRadius(10))
-                            }
+                                    .font(.headline).bold()
+                                    .foregroundColor(.black)
+                                    .offset(x: -8, y: 74)
+                                    
+                                                                }
                             .padding(.top, 30)
                             
-                            Image("bonk")
+                            Image("bonk cave")
                                 .resizable()
                                 .scaledToFit()
-                                .scaleEffect(2.6)
+                                .scaleEffect(1.6)
+                                .rotationEffect(.degrees(270))
+                                .offset(x: -12, y: 24)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .layoutPriority(-1)
                                  .zIndex(-1)
@@ -140,8 +125,7 @@ struct GameBoardView: View {
                             Spacer()
                             
                             VStack(spacing: 10) {
-                                let assignedCount = game.livingTeammates.compactMap { $0.assignedCard }.count
-                                let totalLiving = game.livingTeammates.count
+                                
                                 
                                 
                                 Button(action: {
@@ -156,14 +140,12 @@ struct GameBoardView: View {
                                         .overlay(RoundedRectangle(cornerRadius: 25).stroke(Color.gray.opacity(0.5), lineWidth: 3))
                                 }
                                 .disabled(!game.allLivingAssigned || game.isGameOver)
-                                Text("\(assignedCount) of \(totalLiving) assigned")
-                                    .font(.body)
-                                    .foregroundColor(Color(red: 0.4, green: 0.2, blue: 0.1))
+                                
+                                
                             }
                             .padding(.bottom, 20)
                         }
                         .frame(width: geometry.size.width * 0.35)
-                        .background(Color.white.opacity(0.3))
                     }
                     .frame(width: geometry.size.width, height: geometry.size.height)
                 }

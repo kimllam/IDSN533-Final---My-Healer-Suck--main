@@ -22,7 +22,7 @@ struct TeammateCardView: View {
                 Image(teammate.headImageName)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 40, height: 40)
+                    .frame(width: 60, height: 60)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(teammate.name)
@@ -49,13 +49,13 @@ struct TeammateCardView: View {
                     .scaledToFit()
                     .frame(height: 85)
                 Text("GHOST\n(Out of play)")
-                    .font(.system(size: 11, weight: .bold, design: .serif))
+                    .font(.system(size: 12, weight: .bold, design: .serif))
                     .foregroundColor(mediumBrown)
                     .multilineTextAlignment(.center)
                 Spacer()
             } else {
                 Text("Possible moves")
-                    .font(.system(size: 11, weight: .bold, design: .serif))
+                    .font(.system(size: 12, weight: .bold, design: .serif))
                     .foregroundColor(darkBrownText)
                 
                 // idiot's card slot
@@ -77,19 +77,28 @@ struct TeammateCardView: View {
                         .frame(height: 32)
                     
                     if let card = teammate.assignedCard {
-                        Text(card.rawValue)
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(darkBrownText)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.white.cornerRadius(6))
-                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(darkBrownText, lineWidth: 1))
-                            .draggable(card.rawValue)
-                            .onTapGesture {
-                                withAnimation {
-                                    game.unassignCard(from: teammate)
-                                }
-                            }
+                                            HStack(spacing: 4) {
+                                                Image(card.imageName)
+                                                    .resizable()
+                                                    .scaledToFit()
+                                                    .frame(height: 24)
+                                                
+                                                Text(card.rawValue)
+                                                    .font(.system(size: 10, weight: .bold))
+                                                    .foregroundColor(darkBrownText)
+                                                    .lineLimit(1)
+                                                    .minimumScaleFactor(0.7)
+                                            }
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 3)
+                                            .background(Color.white.cornerRadius(6))
+                                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(darkBrownText, lineWidth: 1))
+                                            .draggable(card.rawValue)
+                                            .onTapGesture {
+                                                withAnimation {
+                                                    game.unassignCard(from: teammate)
+                                                }
+                                            }
                     } else {
                         Text("Drop response here")
                             .font(.system(size: 10, weight: .semibold, design: .serif))

@@ -12,4 +12,12 @@ enum HealerCard: String, CaseIterable, Identifiable {
     case doNothing = "Do Nothing"
     
     var id: String { rawValue }
+    
+    var imageName: String {
+        switch self {
+        case .heal: return "heal card"
+        case .reverse: return "reverse card"
+        case .doNothing: return "nothing card"
+        }
+    }
 }
