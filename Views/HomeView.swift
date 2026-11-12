@@ -25,29 +25,29 @@ struct HomeView: View {
                     // LEFT SIDE: game illustration
                     ZStack {
                         Image("HomeBackground")
+                            .resizable()
                             .scaledToFit()
-                            .padding(16)
+                            .scaleEffect(1.4)
                     }
                     .frame(width: geometry.size.width * 0.55, height: geometry.size.height)
-                    
+                    Spacer(minLength: 32)
                     // RIGHT SIDE: Title & Action Buttons
-                    VStack(spacing: 20) {
+                    VStack(spacing: 24) {
                         Spacer()
                         
-                        VStack(spacing: 8) {
-                            Text("My Healer\nSucks!")
-                                .font(.system(size: 42, weight: .black, design: .serif))
-                                .foregroundColor(darkBrown)
-                                .multilineTextAlignment(.center)
-                                .minimumScaleFactor(0.7)
+                        VStack(spacing: 24) {
+                            Image("game title")
+                                .resizable()
+                                .scaledToFit()
+                                .scaleEffect(1.2)
                             
-                            Text("Defeat Bonk before two idiots die.")
+                            Text("Defeat BONK before two idiots die.")
                                 .font(.system(size: 14, weight: .semibold, design: .serif))
                                 .foregroundColor(darkBrown.opacity(0.85))
                                 .multilineTextAlignment(.center)
                         }
-                        
-                        VStack(spacing: 12) {
+                        Spacer()
+                        VStack(spacing: 8) {
                             NavigationLink(
                                 destination: GameBoardView()
                                     .navigationBarBackButtonHidden(true)
@@ -55,7 +55,7 @@ struct HomeView: View {
                                 Text("Play")
                                     .font(.title3.bold())
                                     .foregroundColor(.white)
-                                    .frame(width: 210, height: 48)
+                                    .frame(width: 280, height: 48)
                                     .background(darkBrown)
                                     .cornerRadius(24)
                                     .overlay(
@@ -71,7 +71,7 @@ struct HomeView: View {
                                 Text("How to Play")
                                     .font(.headline.bold())
                                     .foregroundColor(darkBrown)
-                                    .frame(width: 210, height: 42)
+                                    .frame(width: 280, height: 42)
                                     .background(panelTan)
                                     .cornerRadius(21)
                                     .overlay(
@@ -81,7 +81,6 @@ struct HomeView: View {
                             }
                         }
                         
-                        Spacer()
                     }
                     .padding(.horizontal, 20)
                     .frame(width: geometry.size.width * 0.45, height: geometry.size.height)
