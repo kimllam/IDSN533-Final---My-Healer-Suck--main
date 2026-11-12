@@ -11,82 +11,62 @@ struct HomeView: View {
     @EnvironmentObject var game: GameManager
     @State private var showHowToPlay = false
     
-    let backgroundTan = Color(red: 252 / 255, green: 220 / 255, blue: 187 / 255)
-    let panelTan = Color(red: 245 / 255, green: 215 / 255, blue: 180 / 255)
+    let lightTan = Color(red: 245 / 255, green: 215 / 255, blue: 180 / 255)
     let darkBrown = Color(red: 0.35, green: 0.23, blue: 0.18)
     
     var body: some View {
-        ZStack {
-            backgroundTan
-                .ignoresSafeArea()
-            
-            GeometryReader { geometry in
-                HStack(spacing: 0) {
-                    // LEFT SIDE: game illustration
-                    ZStack {
-                        Image("HomeBackground")
-                            .resizable()
-                            .scaledToFit()
-                            .scaleEffect(1.4)
+        GeometryReader { geometry in
+            ZStack {
+                // full-screen background artwork
+                Image("landing")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+                    .allowsHitTesting(false)
+                
+                // buttons
+                VStack(spacing: 12) {
+                    NavigationLink(
+                        destination: GameBoardView()
+                            .navigationBarBackButtonHidden(true)
+                    ) {
+                        Text("Play")
+                            .font(.title3.bold())
+                            .foregroundColor(Color.white)
+                            .frame(width: 210, height: 48)
+                            .background(darkBrown)
+                            .cornerRadius(24)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 24)
+                                    .stroke(darkBrown, lineWidth: 2)
+                            )
+                            .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
                     }
-                    .frame(width: geometry.size.width * 0.55, height: geometry.size.height)
-                    Spacer(minLength: 32)
-                    // RIGHT SIDE: Title & Action Buttons
-                    VStack(spacing: 24) {
-                        Spacer()
-                        
-                        VStack(spacing: 24) {
-                            Image("game title")
-                                .resizable()
-                                .scaledToFit()
-                                .scaleEffect(1.2)
-                            
-                            Text("Defeat BONK before two idiots die.")
-                                .font(.system(size: 14, weight: .semibold, design: .serif))
-                                .foregroundColor(darkBrown.opacity(0.85))
-                                .multilineTextAlignment(.center)
-                        }
-                        Spacer()
-                        VStack(spacing: 8) {
-                            NavigationLink(
-                                destination: GameBoardView()
-                                    .navigationBarBackButtonHidden(true)
-                            ) {
-                                Text("Play")
-                                    .font(.title3.bold())
-                                    .foregroundColor(.white)
-                                    .frame(width: 280, height: 48)
-                                    .background(darkBrown)
-                                    .cornerRadius(24)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 24)
-                                            .stroke(darkBrown, lineWidth: 2)
-                                    )
-                                    .shadow(radius: 3)
-                            }
-                            
-                            Button(action: {
-                                showHowToPlay = true
-                            }) {
-                                Text("How to Play")
-                                    .font(.headline.bold())
-                                    .foregroundColor(darkBrown)
-                                    .frame(width: 280, height: 42)
-                                    .background(panelTan)
-                                    .cornerRadius(21)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 21)
-                                            .stroke(darkBrown, lineWidth: 2)
-                                    )
-                            }
-                        }
-                        
+                    
+                    Button(action: {
+                        showHowToPlay = true
+                    }) {
+                        Text("How to Play")
+                            .font(.headline.bold())
+                            .foregroundColor(darkBrown)
+                            .frame(width: 210, height: 42)
+                            .background(lightTan)
+                            .cornerRadius(21)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 21)
+                                    .stroke(darkBrown, lineWidth: 2)
+                            )
+                            .shadow(color: .black.opacity(0.15), radius: 3, y: 2)
                     }
-                    .padding(.horizontal, 20)
-                    .frame(width: geometry.size.width * 0.45, height: geometry.size.height)
                 }
+                .position(
+                    x: geometry.size.width * 0.82,
+                    y: geometry.size.height * 0.63
+                )
             }
         }
+        .ignoresSafeArea()
         .sheet(isPresented: $showHowToPlay) {
             HowToPlaySheetView()
         }
