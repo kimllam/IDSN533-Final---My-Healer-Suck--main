@@ -85,7 +85,6 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, 20)
                     .frame(width: geometry.size.width * 0.45, height: geometry.size.height)
-                    .background(Color.white.opacity(0.25))
                 }
             }
         }

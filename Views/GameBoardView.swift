@@ -65,10 +65,13 @@ struct GameBoardView: View {
                             // healer 'your cards' hand row
                             HStack(spacing: 8) {
                                 VStack {
-                                    Image("healer your card")
+                                    Image("healer card")
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(maxWidth: 70)
+                                        .scaleEffect(1.8)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                      .layoutPriority(-1)
+                                         .zIndex(-1)
                                 }
                                 
                                 HStack(spacing: 8) {
@@ -129,7 +132,10 @@ struct GameBoardView: View {
                             Image("bonk")
                                 .resizable()
                                 .scaledToFit()
-                                .padding()
+                                .scaleEffect(2.6)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .layoutPriority(-1)
+                                 .zIndex(-1)
                             
                             Spacer()
                             
@@ -137,9 +143,6 @@ struct GameBoardView: View {
                                 let assignedCount = game.livingTeammates.compactMap { $0.assignedCard }.count
                                 let totalLiving = game.livingTeammates.count
                                 
-                                Text("\(assignedCount) of \(totalLiving) assigned")
-                                    .font(.headline)
-                                    .foregroundColor(Color(red: 0.4, green: 0.2, blue: 0.1))
                                 
                                 Button(action: {
                                     withAnimation { game.resolveEncounter() }
@@ -153,6 +156,9 @@ struct GameBoardView: View {
                                         .overlay(RoundedRectangle(cornerRadius: 25).stroke(Color.gray.opacity(0.5), lineWidth: 3))
                                 }
                                 .disabled(!game.allLivingAssigned || game.isGameOver)
+                                Text("\(assignedCount) of \(totalLiving) assigned")
+                                    .font(.body)
+                                    .foregroundColor(Color(red: 0.4, green: 0.2, blue: 0.1))
                             }
                             .padding(.bottom, 20)
                         }
