@@ -35,7 +35,6 @@ class Teammate: ObservableObject, Identifiable {
     }
     
     var headImageName: String {
-        if isGhost { return "ghost" }
         switch character {
         case .vampireAssassin: return "vampire head"
         case .knight: return "knight head"
@@ -44,7 +43,6 @@ class Teammate: ObservableObject, Identifiable {
     }
     
     var fullBodyImageName: String {
-        if isGhost { return "ghost" }
         switch character {
         case .vampireAssassin: return "vampire full"
         case .knight: return "knight full"

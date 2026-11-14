@@ -9,6 +9,11 @@ import SwiftUI
 import Combine
 internal import GameplayKit
 
+struct GhostTheft: Identifiable {
+    let id: UUID // The teammate who lost their last HP.
+    let card: HealerCard
+}
+
 class GameManager: ObservableObject {
     @Published var teammates: [Teammate] = [
         Teammate(character: .vampireAssassin, hp: 3),
@@ -17,6 +22,12 @@ class GameManager: ObservableObject {
     ]
     @Published var bonkHP: Int = 5
     @Published var availableCards: [HealerCard] = [.heal, .reverse, .doNothing]
+    @Published private(set) var pendingThefts: [GhostTheft] = []
+    private(set) var stolenCards: [UUID: HealerCard] = [:]
+    func finishGhostTheft(_ id: UUID) {
+        pendingThefts.removeAll { $0.id == id }
+    }
+
     @Published var encounterNumber: Int = 1
     
     // win & lose state
@@ -55,7 +66,7 @@ class GameManager: ObservableObject {
 
     // drag & drop healer actions
     func assignCard(card: HealerCard, to teammate: Teammate) {
-        guard !teammate.isGhost else { return }
+        guard !teammate.isGhost, !stolenCards.values.contains(card) else { return }
         if teammate.assignedCard == card { return }
         
         for existing in teammates where existing.assignedCard == card {
@@ -77,6 +88,7 @@ class GameManager: ObservableObject {
     }
     
     func returnToHand(card: HealerCard) {
+        guard !stolenCards.values.contains(card) else { return }
         for teammate in teammates where teammate.assignedCard == card {
             teammate.assignedCard = nil
         }
@@ -155,7 +167,7 @@ class GameManager: ObservableObject {
             for teammate in teammates {
                 teammate.prepareNextTurn()
             }
-            availableCards = [.heal, .reverse, .doNothing]
+            availableCards = HealerCard.allCases.filter { !stolenCards.values.contains($0) }
         }
     }
 
@@ -340,6 +352,11 @@ class GameManager: ObservableObject {
         }
         
         if teammate.hp == 0 {
+            // Entering the ghost state clears the teammate’s assigned card.
+            if let card = teammate.assignedCard {
+                stolenCards[teammate.id] = card
+                pendingThefts.append(GhostTheft(id: teammate.id, card: card))
+            }
             teammate.stateMachine?.enter(TeammateGhostState.self)
         }
     }
@@ -386,6 +403,8 @@ class GameManager: ObservableObject {
     
     func resetGame() {
         withAnimation {
+            pendingThefts.removeAll()
+            stolenCards.removeAll()
             bonkHP = 5
             encounterNumber = 1
             isGameOver = false

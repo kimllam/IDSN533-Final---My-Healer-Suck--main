@@ -11,6 +11,9 @@ struct TeammateCardView: View {
     @ObservedObject var teammate: Teammate
     @EnvironmentObject var game: GameManager
     
+    let onCardMove: (HealerCard, CGPoint) -> Void
+    let onCardDrop: (HealerCard, CGPoint) -> Void
+
     let cardBackground = Color(red: 0.98, green: 0.85, blue: 0.68)
     let darkBrownText = Color(red: 0.35, green: 0.23, blue: 0.18)
     let mediumBrown = Color(red: 0.65, green: 0.5, blue: 0.4)
@@ -44,10 +47,18 @@ struct TeammateCardView: View {
             
             if teammate.isGhost {
                 Spacer()
-                Image("ghost")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 85)
+                if let card = game.stolenCards[teammate.id] {
+                    GhostWithStolenCard(card: card)
+                        .opacity(game.pendingThefts.contains { $0.id == teammate.id } ? 0 : 1)
+                        .anchorPreference(key: TheftAnchors.self, value: .bounds) {
+                            [.panel(teammate.id): $0]
+                        }
+                } else {
+                    Image("ghost")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 85)
+                }
                 Text("GHOST\n(Out of play)")
                     .font(.system(size: 12, weight: .bold, design: .serif))
                     .foregroundColor(mediumBrown)
@@ -93,12 +104,12 @@ struct TeammateCardView: View {
                                             .padding(.vertical, 3)
                                             .background(Color.white.cornerRadius(6))
                                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(darkBrownText, lineWidth: 1))
-                                            .draggable(card.rawValue)
-                                            .onTapGesture {
+                                            .modifier(HealerCardDrag(card: card, onMove: onCardMove, onDrop: onCardDrop))
+                                            .simultaneousGesture(TapGesture().onEnded {
                                                 withAnimation {
                                                     game.unassignCard(from: teammate)
                                                 }
-                                            }
+                                            })
                     } else {
                         Text("Drop response here")
                             .font(.system(size: 10, weight: .semibold, design: .serif))
@@ -125,6 +136,25 @@ struct TeammateCardView: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(darkBrownText, lineWidth: 2)
         )
+    }
+}
+
+struct GhostWithStolenCard: View {
+    let card: HealerCard
+
+    var body: some View {
+        ZStack {
+            Image(card.imageName)
+                .resizable().scaledToFit().frame(height: 50)
+                .grayscale(1).opacity(0.48)
+                .rotationEffect(.degrees(-8)).offset(y: 17)
+            Image("ghost")
+                .resizable().scaledToFit().frame(width: 102)
+                .offset(y: -12)
+        }
+        .frame(height: 85)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Ghost holding \(card.rawValue)")
     }
 }
 
@@ -167,7 +197,7 @@ struct MoveOptionBoxView: View {
 }
 
 #Preview {
-    TeammateCardView(teammate: Teammate(character: .drBoomBoom, hp: 3))
+    TeammateCardView(teammate: Teammate(character: .drBoomBoom, hp: 3), onCardMove: { _, _ in }, onCardDrop: { _, _ in })
         .environmentObject(GameManager())
         .frame(width: 220, height: 260)
 }
