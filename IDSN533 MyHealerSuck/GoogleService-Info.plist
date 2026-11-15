@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyAPX_r37ky2U5SY_KOBSmSBi_tXHbNCevY</string>
+	<key>GCM_SENDER_ID</key>
+	<string>159846278065</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.guppy.IDSN533-MyHealerSuck</string>
+	<key>PROJECT_ID</key>
+	<string>myhealersucks</string>
+	<key>STORAGE_BUCKET</key>
+	<string>myhealersucks.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:159846278065:ios:75161fa588271986351390</string>
+</dict>
+</plist>
