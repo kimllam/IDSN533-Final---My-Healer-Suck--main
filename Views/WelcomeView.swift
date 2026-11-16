@@ -3,6 +3,7 @@ import SwiftUI
 
 // MARK: - Welcome View
 // Updated by Jingyi: Account selection after tapping Play.
+// Updated by Jingyi: Hide the system navigation bar in guest gameplay.
 
 struct WelcomeView: View {
 
@@ -10,27 +11,28 @@ struct WelcomeView: View {
     private var entryMode = ""
 
     private let background = Color(
-        red: 252 / 255,
-        green: 220 / 255,
-        blue: 187 / 255
+        red: 252.0 / 255,
+        green: 220.0 / 255,
+        blue: 187.0 / 255
     )
 
     private let paper = Color(
-        red: 255 / 255,
-        green: 243 / 255,
-        blue: 228 / 255
+        red: 255.0 / 255,
+        green: 243.0 / 255,
+        blue: 228.0 / 255
     )
 
     private let brown = Color(
-        red: 89 / 255,
-        green: 59 / 255,
-        blue: 46 / 255
+        red: 89.0 / 255,
+        green: 59.0 / 255,
+        blue: 46.0 / 255
     )
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                background.ignoresSafeArea()
+                background
+                    .ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -50,23 +52,38 @@ struct WelcomeView: View {
                             )
                             .foregroundStyle(brown)
 
-                        Text("Choose how you'd like to enter the game.")
-                            .font(.system(size: 14))
-                            .foregroundStyle(
-                                brown.opacity(0.75)
-                            )
-                            .multilineTextAlignment(.center)
+                        Text(
+                            "Choose how you'd like to enter the game."
+                        )
+                        .font(.system(size: 14))
+                        .foregroundStyle(
+                            brown.opacity(0.75)
+                        )
+                        .multilineTextAlignment(.center)
 
                         VStack(spacing: 14) {
 
+                            // MARK: - Continue as Guest
+                            // Updated by Jingyi:
+                            // Hide the system navigation bar
+                            // to prevent overlap in landscape.
+
                             NavigationLink {
                                 GameBoardView()
+                                    .navigationBarBackButtonHidden(true)
+                                    .toolbar(
+                                        .hidden,
+                                        for: .navigationBar
+                                    )
                                     .onAppear {
                                         entryMode = "guest"
                                     }
                             } label: {
                                 HStack(spacing: 10) {
-                                    Image(systemName: "gamecontroller.fill")
+                                    Image(
+                                        systemName: "gamecontroller.fill"
+                                    )
+
                                     Text("Continue as Guest")
                                 }
                                 .frame(maxWidth: .infinity)
@@ -80,11 +97,17 @@ struct WelcomeView: View {
                                 )
                             }
 
+                            // MARK: - Create Account
+                            // Original authentication route retained.
+
                             NavigationLink {
                                 AuthView(mode: .signUp)
                             } label: {
                                 HStack(spacing: 10) {
-                                    Image(systemName: "person.badge.plus")
+                                    Image(
+                                        systemName: "person.badge.plus"
+                                    )
+
                                     Text("Create Account")
                                 }
                                 .frame(maxWidth: .infinity)
@@ -107,23 +130,32 @@ struct WelcomeView: View {
                                 }
                             }
 
+                            // MARK: - Log In
+                            // Original authentication route retained.
+
                             NavigationLink {
                                 AuthView(mode: .logIn)
                             } label: {
-                                Text("Already have an account? Log In")
-                                    .font(.system(
+                                Text(
+                                    "Already have an account? Log In"
+                                )
+                                .font(
+                                    .system(
                                         size: 14,
                                         weight: .semibold
-                                    ))
-                                    .foregroundStyle(brown)
-                                    .underline()
-                                    .padding(.top, 10)
+                                    )
+                                )
+                                .foregroundStyle(brown)
+                                .underline()
+                                .padding(.top, 10)
                             }
                         }
-                        .font(.system(
-                            size: 16,
-                            weight: .semibold
-                        ))
+                        .font(
+                            .system(
+                                size: 16,
+                                weight: .semibold
+                            )
+                        )
                         .buttonStyle(.plain)
                         .padding(.top, 10)
                     }
@@ -136,11 +168,13 @@ struct WelcomeView: View {
                         )
                     )
                     .overlay {
-                        RoundedRectangle(cornerRadius: 22)
-                            .stroke(
-                                brown.opacity(0.7),
-                                lineWidth: 1.5
-                            )
+                        RoundedRectangle(
+                            cornerRadius: 22
+                        )
+                        .stroke(
+                            brown.opacity(0.7),
+                            lineWidth: 1.5
+                        )
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 24)
@@ -157,6 +191,8 @@ struct WelcomeView: View {
         .tint(brown)
     }
 }
+
+// MARK: - Preview
 
 #Preview {
     NavigationStack {

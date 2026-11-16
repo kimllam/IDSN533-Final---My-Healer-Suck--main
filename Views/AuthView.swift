@@ -5,6 +5,7 @@
 //
 //  Created by Jingyi on 11/15/26.
 //  Updated by Jingyi: Firebase Authentication and email verification.
+//  Updated by Jingyi: Consistent landscape navigation.
 //
 
 import SwiftUI
@@ -77,13 +78,11 @@ struct AuthView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-
                 backgroundTan
                     .ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 22) {
-
                         if showVerification {
                             verificationHeader
                             verificationPanel
@@ -107,12 +106,19 @@ struct AuthView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .tint(darkBrown)
+
+        // MARK: - Navigate to Game
+        // Updated by Jingyi: Hide the navigation bar
+        // for the same landscape layout as guest mode.
+
         .navigationDestination(
             isPresented: $navigateToGame
         ) {
             GameBoardView()
                 .navigationBarBackButtonHidden(true)
+                .toolbar(.hidden, for: .navigationBar)
         }
+
         .alert(
             alertTitle,
             isPresented: $showAlert
@@ -127,7 +133,6 @@ struct AuthView: View {
 
     private var authenticationHeader: some View {
         VStack(spacing: 12) {
-
             Image(
                 systemName: isSignUp
                     ? "person.crop.circle.badge.plus"
@@ -176,7 +181,6 @@ struct AuthView: View {
             alignment: .leading,
             spacing: 16
         ) {
-
             emailField
             passwordField
 
@@ -191,9 +195,7 @@ struct AuthView: View {
                     await submit()
                 }
             } label: {
-
                 HStack(spacing: 10) {
-
                     if isSubmitting {
                         ProgressView()
                             .tint(.white)
@@ -207,9 +209,7 @@ struct AuthView: View {
                 }
                 .font(.headline)
                 .foregroundStyle(.white)
-                .frame(
-                    maxWidth: .infinity
-                )
+                .frame(maxWidth: .infinity)
                 .frame(height: 52)
                 .background(
                     darkBrown,
@@ -220,9 +220,7 @@ struct AuthView: View {
             }
             .buttonStyle(.plain)
             .disabled(isSubmitting)
-            .opacity(
-                isSubmitting ? 0.65 : 1
-            )
+            .opacity(isSubmitting ? 0.65 : 1)
             .padding(.top, 8)
 
             // MARK: - Password Reset
@@ -240,9 +238,7 @@ struct AuthView: View {
                                 weight: .semibold
                             )
                         )
-                        .frame(
-                            maxWidth: .infinity
-                        )
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
                 .disabled(isSubmitting)
@@ -295,7 +291,6 @@ struct AuthView: View {
             alignment: .leading,
             spacing: 7
         ) {
-
             Text("Email")
                 .font(.subheadline.bold())
 
@@ -324,12 +319,10 @@ struct AuthView: View {
             alignment: .leading,
             spacing: 7
         ) {
-
             Text("Password")
                 .font(.subheadline.bold())
 
             HStack(spacing: 10) {
-
                 Group {
                     if showPassword {
                         TextField(
@@ -354,7 +347,6 @@ struct AuthView: View {
                 Button {
                     showPassword.toggle()
                 } label: {
-
                     Image(
                         systemName: showPassword
                             ? "eye.slash"
@@ -381,7 +373,6 @@ struct AuthView: View {
             alignment: .leading,
             spacing: 7
         ) {
-
             Text("Confirm Password")
                 .font(.subheadline.bold())
 
@@ -407,11 +398,12 @@ struct AuthView: View {
 
     private var verificationHeader: some View {
         VStack(spacing: 14) {
-
-            Image(systemName: "envelope.badge.shield.half.filled")
-                .font(.system(size: 54))
-                .foregroundStyle(darkBrown)
-                .symbolRenderingMode(.hierarchical)
+            Image(
+                systemName: "envelope.badge.shield.half.filled"
+            )
+            .font(.system(size: 54))
+            .foregroundStyle(darkBrown)
+            .symbolRenderingMode(.hierarchical)
 
             Text("Verify Your Email")
                 .font(
@@ -444,7 +436,6 @@ struct AuthView: View {
 
     private var verificationPanel: some View {
         VStack(spacing: 20) {
-
             Image(systemName: "mail")
                 .font(.system(size: 32))
                 .foregroundStyle(darkBrown)
@@ -468,18 +459,16 @@ struct AuthView: View {
             )
             .multilineTextAlignment(.center)
 
-            Text(
-                auth.email ?? email
-            )
-            .font(
-                .system(
-                    size: 15,
-                    weight: .semibold
+            Text(auth.email ?? email)
+                .font(
+                    .system(
+                        size: 15,
+                        weight: .semibold
+                    )
                 )
-            )
-            .foregroundStyle(darkBrown)
-            .multilineTextAlignment(.center)
-            .textSelection(.enabled)
+                .foregroundStyle(darkBrown)
+                .multilineTextAlignment(.center)
+                .textSelection(.enabled)
 
             Divider()
                 .overlay(
@@ -506,7 +495,6 @@ struct AuthView: View {
                     await checkVerification()
                 }
             } label: {
-
                 HStack(spacing: 10) {
                     if isSubmitting {
                         ProgressView()
@@ -546,7 +534,6 @@ struct AuthView: View {
                 }
             } label: {
                 HStack(spacing: 8) {
-
                     Image(
                         systemName: "arrow.clockwise"
                     )
@@ -635,7 +622,6 @@ struct AuthView: View {
 
     @MainActor
     private func submit() async {
-
         guard !isSubmitting else {
             return
         }
@@ -670,7 +656,6 @@ struct AuthView: View {
         }
 
         if isSignUp {
-
             guard password.count >= 6 else {
                 showMessage(
                     title: "Invalid Password",
@@ -689,14 +674,13 @@ struct AuthView: View {
         }
 
         isSubmitting = true
+
         defer {
             isSubmitting = false
         }
 
         do {
-
             if isSignUp {
-
                 // Firebase creates the account
                 // and sends the verification email.
 
@@ -711,7 +695,6 @@ struct AuthView: View {
                 showVerification = true
 
             } else {
-
                 // Authenticate the existing account.
 
                 try await auth.logIn(
@@ -732,7 +715,6 @@ struct AuthView: View {
             }
 
         } catch {
-
             showMessage(
                 title: "Authentication Failed",
                 message: error.localizedDescription
@@ -745,30 +727,27 @@ struct AuthView: View {
 
     @MainActor
     private func checkVerification() async {
-
         guard !isSubmitting else {
             return
         }
 
         isSubmitting = true
+
         defer {
             isSubmitting = false
         }
 
         do {
-
             let verified =
                 try await auth.checkEmailVerification()
 
             if verified {
-
                 // Enter the game only after
                 // Firebase confirms verification.
 
                 navigateToGame = true
 
             } else {
-
                 showMessage(
                     title: "Email Not Verified",
                     message: "Your email has not been verified yet. Please open the verification link in your inbox and try again."
@@ -776,7 +755,6 @@ struct AuthView: View {
             }
 
         } catch {
-
             showMessage(
                 title: "Verification Error",
                 message: error.localizedDescription
@@ -788,18 +766,17 @@ struct AuthView: View {
 
     @MainActor
     private func resendVerification() async {
-
         guard !isSubmitting else {
             return
         }
 
         isSubmitting = true
+
         defer {
             isSubmitting = false
         }
 
         do {
-
             try await auth.resendVerificationEmail()
 
             showMessage(
@@ -808,7 +785,6 @@ struct AuthView: View {
             )
 
         } catch {
-
             showMessage(
                 title: "Unable to Send Email",
                 message: error.localizedDescription
@@ -821,9 +797,7 @@ struct AuthView: View {
     // before returning to the login form.
 
     private func useAnotherAccount() {
-
         do {
-
             try auth.logOut()
 
             showVerification = false
@@ -835,7 +809,6 @@ struct AuthView: View {
             showPassword = false
 
         } catch {
-
             showMessage(
                 title: "Sign Out Failed",
                 message: error.localizedDescription
@@ -847,7 +820,6 @@ struct AuthView: View {
 
     @MainActor
     private func resetPassword() async {
-
         guard !isSubmitting else {
             return
         }
@@ -857,22 +829,20 @@ struct AuthView: View {
         )
 
         guard !cleanedEmail.isEmpty else {
-
             showMessage(
                 title: "Email Required",
                 message: "Enter your email address first."
             )
-
             return
         }
 
         isSubmitting = true
+
         defer {
             isSubmitting = false
         }
 
         do {
-
             try await auth.resetPassword(
                 email: cleanedEmail
             )
@@ -883,7 +853,6 @@ struct AuthView: View {
             )
 
         } catch {
-
             showMessage(
                 title: "Password Reset Failed",
                 message: error.localizedDescription

@@ -4,6 +4,8 @@
 //  IDSN533 MyHealerSuck
 //
 //  Created by Kim Lam on 11/11/26.
+//  Updated by Jingyi: Responsive battle layout and larger card targets.
+//  Updated by Jingyi: Bonk HP inside the original image sign.
 //
 
 import SwiftUI
@@ -14,8 +16,8 @@ struct GameBoardView: View {
     @EnvironmentObject var game: GameManager
     @Environment(\.dismiss) private var dismiss
 
-    // MARK: - Player Profile Integration
-    // Added by Jingyi: Player avatar and profile navigation.
+    // MARK: - Profile
+    // Added by Jingyi.
 
     @AppStorage("playerAvatarChoice")
     private var avatarChoice = "healer card"
@@ -23,26 +25,26 @@ struct GameBoardView: View {
     @State private var customAvatar: UIImage?
     @State private var showProfile = false
 
-    // MARK: - Pause Menu Integration
-    // Added by Jingyi: In-game pause menu and navigation.
+    // MARK: - Pause Menu
+    // Added by Jingyi.
 
     @State private var isPaused = false
     @State private var showSettings = false
     @State private var showHowToPlay = false
     @State private var confirmReturnHome = false
 
-    // MARK: - Existing Game Colors
+    // MARK: - Colors
 
     private let backgroundTan = Color(
-        red: 252 / 255,
-        green: 220 / 255,
-        blue: 187 / 255
+        red: 252.0 / 255,
+        green: 220.0 / 255,
+        blue: 187.0 / 255
     )
 
     private let lightTan = Color(
-        red: 245 / 255,
-        green: 215 / 255,
-        blue: 180 / 255
+        red: 245.0 / 255,
+        green: 215.0 / 255,
+        blue: 180.0 / 255
     )
 
     private let darkBrown = Color(
@@ -52,145 +54,95 @@ struct GameBoardView: View {
     )
 
     private let paper = Color(
-        red: 255 / 255,
-        green: 243 / 255,
-        blue: 228 / 255
+        red: 1,
+        green: 243.0 / 255,
+        blue: 228.0 / 255
     )
 
     // MARK: - Main View
 
     var body: some View {
-        ZStack {
+        GeometryReader { geometry in
 
-            backgroundTan
-                .ignoresSafeArea()
+            let portrait =
+                geometry.size.width < geometry.size.height
 
-            // Existing battle content
+            let compact =
+                geometry.size.height < 410
 
-            Group {
-                if game.isResolving {
+            ZStack {
+                backgroundTan
+                    .ignoresSafeArea()
 
-                    EncounterResolutionView()
-                        .transition(
-                            .asymmetric(
-                                insertion: .opacity.combined(
-                                    with: .scale(scale: 0.96)
-                                ),
-                                removal: .opacity
+                VStack(spacing: 0) {
+
+                    // MARK: - Shared Header
+                    // Keep the controls inside the safe area.
+
+                    if !game.isGameOver {
+                        topBar(compact: compact)
+                    }
+
+                    if game.isResolving {
+
+                        EncounterResolutionView()
+                            .frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
                             )
-                        )
+                            .allowsHitTesting(!isPaused)
 
-                } else {
+                    } else if portrait {
 
-                    battleBoard
-                        .transition(
-                            .asymmetric(
-                                insertion: .opacity,
-                                removal: .scale(
-                                    scale: 0.85,
-                                    anchor: .top
-                                )
-                                .combined(with: .opacity)
-                            )
+                        portraitBattleBoard(
+                            size: geometry.size
                         )
+                        .allowsHitTesting(!isPaused)
+
+                    } else {
+
+                        landscapeBattleBoard(
+                            size: geometry.size,
+                            compact: compact
+                        )
+                        .allowsHitTesting(!isPaused)
+                    }
                 }
-            }
-            .allowsHitTesting(!isPaused)
-
-            // Existing game-over screen
-
-            if game.isGameOver {
-
-                GameOverOverlayView(
-                    didWin: game.didPlayerWin,
-
-                    onPlayAgain: {
-                        isPaused = false
-                        game.resetGame()
-                    },
-
-                    onReturnHome: {
-                        isPaused = false
-                        game.resetGame()
-                        dismiss()
-                    }
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity
                 )
-                .transition(
-                    .opacity.combined(
-                        with: .scale(scale: 0.9)
-                    )
-                )
-                .zIndex(10)
-            }
 
-            // MARK: - Pause Overlay
-            // Added by Jingyi: Blocks battle interactions
-            // while the pause menu is visible.
+                // MARK: - Game Over
 
-            if isPaused && !game.isGameOver {
-                pauseOverlay
-                    .zIndex(20)
-            }
-        }
-
-        // MARK: - Battle Shortcuts
-        // Added by Jingyi: Profile and Pause buttons.
-
-        .overlay(alignment: .topTrailing) {
-
-            if !isPaused && !game.isGameOver {
-
-                HStack(spacing: 10) {
-
-                    Button {
-                        loadAvatar()
-                        showProfile = true
-                    } label: {
-                        playerAvatarButton
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Player Profile")
-
-                    Button {
-                        withAnimation(
-                            .easeInOut(duration: 0.2)
-                        ) {
-                            isPaused = true
+                if game.isGameOver {
+                    GameOverOverlayView(
+                        didWin: game.didPlayerWin,
+                        onPlayAgain: {
+                            isPaused = false
+                            game.resetGame()
+                        },
+                        onReturnHome: {
+                            isPaused = false
+                            game.resetGame()
+                            dismiss()
                         }
-                    } label: {
-
-                        Image(systemName: "pause.fill")
-                            .font(
-                                .system(
-                                    size: 18,
-                                    weight: .bold
-                                )
-                            )
-                            .foregroundStyle(darkBrown)
-                            .frame(width: 44, height: 44)
-                            .background(
-                                lightTan,
-                                in: Circle()
-                            )
-                            .overlay {
-                                Circle()
-                                    .stroke(
-                                        darkBrown,
-                                        lineWidth: 1.5
-                                    )
-                            }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Pause Game")
+                    )
+                    .zIndex(10)
                 }
-                .padding(.top, 8)
-                .padding(.trailing, 16)
+
+                // MARK: - Pause
+
+                if isPaused && !game.isGameOver {
+                    pauseOverlay(compact: compact)
+                        .zIndex(20)
+                }
             }
         }
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
 
-        // MARK: - Navigation
-        // Added by Jingyi: Open additional screens
-        // without resetting the current battle.
+        // MARK: - Sheets
 
         .sheet(
             isPresented: $showProfile,
@@ -201,27 +153,25 @@ struct GameBoardView: View {
             PlayerProfileView()
         }
 
-        .sheet(isPresented: $showSettings) {
+        .sheet(
+            isPresented: $showSettings
+        ) {
             SettingsView()
         }
 
-        // MARK: - Redesigned Battle Instructions
-        // Updated by Jingyi: Use the dedicated
-        // centered instruction screen.
-
-        .sheet(isPresented: $showHowToPlay) {
+        .sheet(
+            isPresented: $showHowToPlay
+        ) {
             BattleHowToPlayView()
         }
 
-        // MARK: - Return Home Confirmation
-        // Added by Jingyi: Prevent accidental exits.
+        // MARK: - Return Confirmation
 
         .confirmationDialog(
             "Leave the current game?",
             isPresented: $confirmReturnHome,
             titleVisibility: .visible
         ) {
-
             Button(
                 "Return Home",
                 role: .destructive
@@ -242,6 +192,8 @@ struct GameBoardView: View {
             )
         }
 
+        // MARK: - Lifecycle
+
         .onAppear {
             loadAvatar()
         }
@@ -250,370 +202,738 @@ struct GameBoardView: View {
             loadAvatar()
         }
 
-        .onChange(of: game.isGameOver) { _, gameOver in
-            if gameOver {
+        .onChange(of: game.isGameOver) { _, ended in
+            if ended {
                 isPaused = false
             }
         }
     }
 
-    // MARK: - Existing Battle Board
-    // Original card assignment and Bonk logic retained.
+    // MARK: - Top Bar
+    // Updated by Jingyi:
+    // The same header is used in portrait and landscape.
 
-    private var battleBoard: some View {
+    private func topBar(
+        compact: Bool
+    ) -> some View {
+
+        HStack(spacing: 10) {
+
+            Text(
+                game.isResolving
+                    ? "Encounter"
+                    : "Assign Your Healer Cards"
+            )
+            .font(
+                .system(
+                    size: compact ? 14 : 17,
+                    weight: .bold,
+                    design: .rounded
+                )
+            )
+            .foregroundStyle(darkBrown)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+
+            Spacer(minLength: 4)
+
+            // MARK: - Player Profile
+
+            Button {
+                loadAvatar()
+                showProfile = true
+            } label: {
+                playerAvatarButton
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Player Profile")
+
+            // MARK: - Pause Button
+
+            Button {
+                withAnimation(
+                    .easeInOut(duration: 0.2)
+                ) {
+                    isPaused = true
+                }
+            } label: {
+                Image(systemName: "pause.fill")
+                    .font(
+                        .system(
+                            size: 17,
+                            weight: .bold
+                        )
+                    )
+                    .foregroundStyle(darkBrown)
+                    .frame(
+                        width: 44,
+                        height: 44
+                    )
+                    .background(
+                        lightTan,
+                        in: Circle()
+                    )
+                    .overlay {
+                        Circle()
+                            .stroke(
+                                darkBrown,
+                                lineWidth: 1.5
+                            )
+                    }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Pause Game")
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 56)
+        .frame(maxWidth: .infinity)
+        .background(backgroundTan)
+    }
+
+    // MARK: - Portrait Battle
+    // Updated by Jingyi:
+    // Large teammate cards, Bonk, and healer hand.
+
+    private func portraitBattleBoard(
+        size: CGSize
+    ) -> some View {
+
+        let availableHeight = max(
+            0,
+            size.height - 56
+        )
+
+        let bossHeight: CGFloat = min(
+            150,
+            max(
+                108,
+                availableHeight * 0.19
+            )
+        )
+
+        let handHeight: CGFloat = min(
+            130,
+            max(
+                100,
+                availableHeight * 0.16
+            )
+        )
+
+        return VStack(spacing: 10) {
+
+            // MARK: - Teammate Cards
+
+            teammatePanel
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity
+                )
+
+            // MARK: - Bonk and Action
+
+            HStack(spacing: 12) {
+
+                bonkWithHP
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity
+                    )
+
+                beginEncounterButton(
+                    compact: false
+                )
+                .frame(
+                    width: min(
+                        172,
+                        size.width * 0.44
+                    )
+                )
+            }
+            .frame(height: bossHeight)
+
+            // MARK: - Healer Cards
+
+            healerHand(
+                height: handHeight,
+                availableWidth: size.width - 24
+            )
+            .frame(height: handHeight)
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - Landscape Battle
+    // Updated by Jingyi:
+    // Allocate more width to teammate cards.
+
+    private func landscapeBattleBoard(
+        size: CGSize,
+        compact: Bool
+    ) -> some View {
+
+        let gap: CGFloat = 10
+
+        let usableWidth = max(
+            0,
+            size.width - 24 - gap
+        )
+
+        let bossWidth = min(
+            210,
+            max(
+                135,
+                usableWidth * 0.22
+            )
+        )
+
+        let teammateWidth = max(
+            0,
+            usableWidth - bossWidth
+        )
+
+        let availableHeight = max(
+            0,
+            size.height - 56
+        )
+
+        let handHeight = min(
+            105,
+            max(
+                76,
+                availableHeight * 0.32
+            )
+        )
+
+        return HStack(spacing: gap) {
+
+            // MARK: - Left Team Section
+
+            VStack(spacing: 7) {
+
+                teammatePanel
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity
+                    )
+
+                healerHand(
+                    height: handHeight,
+                    availableWidth: teammateWidth
+                )
+                .frame(height: handHeight)
+            }
+            .frame(width: teammateWidth)
+
+            // MARK: - Right Boss Section
+
+            VStack(spacing: 8) {
+
+                // MARK: - Bonk with HP
+                // HP is rendered on the image,
+                // not as a separate label above it.
+
+                bonkWithHP
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity
+                    )
+
+                beginEncounterButton(
+                    compact: compact
+                )
+            }
+            .frame(width: bossWidth)
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - Bonk HP Display
+    // Added by Jingyi:
+    // Position HP over the original rectangular sign.
+    // Use the same component for both orientations.
+
+    private var bonkWithHP: some View {
         GeometryReader { geometry in
 
-            HStack(spacing: 0) {
+            let side = min(
+                geometry.size.width,
+                geometry.size.height
+            )
 
-                // LEFT COLUMN:
-                // Encounter label, Idiots row and healer cards
+            ZStack {
 
-                VStack(spacing: 0) {
-
-                    Text("Assign Your Healer Cards")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
-                        .padding(.top, 12)
-
-                    Spacer(minLength: 5)
-
-                    // Existing Idiots row
-
-                    VStack {
-                        HStack(
-                            alignment: .top,
-                            spacing: 8
-                        ) {
-                            ForEach(game.teammates) { teammate in
-                                TeammateCardView(
-                                    teammate: teammate
-                                )
-                            }
-                        }
-                    }
-                    .padding(10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(lightTan)
-                            .overlay {
-                                RoundedRectangle(
-                                    cornerRadius: 12
-                                )
-                                .stroke(
-                                    Color.brown,
-                                    lineWidth: 2
-                                )
-                            }
+                Image("bonk cave")
+                    .resizable()
+                    .scaledToFit()
+                    .rotationEffect(
+                        .degrees(270)
                     )
-                    .padding(.horizontal, 10)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity
+                    )
 
-                    Spacer(minLength: 4)
+                // MARK: - HP Label
+                // The offset follows the displayed image size.
 
-                    // Existing healer cards
-
-                    HStack(spacing: 120) {
-
-                        VStack {
-                            Image("healer card")
-                                .resizable()
-                                .scaledToFit()
-                                .scaleEffect(2)
-                                .offset(x: 64)
-                                .frame(
-                                    width: 100,
-                                    height: 100
-                                )
-                                .zIndex(-1)
-                        }
-
-                        HStack(spacing: 4) {
-
-                            ForEach(
-                                game.availableCards,
-                                id: \.self
-                            ) { card in
-
-                                Image(card.imageName)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(height: 120)
-                                    .shadow(
-                                        color: .black.opacity(0.2),
-                                        radius: 8,
-                                        y: 1
-                                    )
-                                    .draggable(card.rawValue)
-                            }
-                        }
-                        .frame(minHeight: 95)
-
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-                    .dropDestination(for: String.self) {
-                        items, _ in
-
-                        guard let rawCard = items.first,
-                              let healerCard = HealerCard(
-                                rawValue: rawCard
-                              )
-                        else {
-                            return false
-                        }
-
-                        withAnimation {
-                            game.returnToHand(
-                                card: healerCard
-                            )
-                        }
-
-                        return true
-                    }
-                }
-                .frame(
-                    width: geometry.size.width * 0.80
+                Text(
+                    "\(max(0, game.bonkHP)) / 5 HP"
                 )
-
-                // RIGHT COLUMN:
-                // Existing Bonk section
-
-                VStack(spacing: 20) {
-
-                    VStack(spacing: 5) {
-                        Text(
-                            "\(max(0, game.bonkHP)) / 5 HP"
-                        )
-                        .font(.headline)
-                        .bold()
-                        .foregroundColor(.black)
-                        .offset(x: -8, y: 74)
-                    }
-                    .padding(.top, 30)
-
-                    Image("bonk cave")
-                        .resizable()
-                        .scaledToFit()
-                        .scaleEffect(1.6)
-                        .rotationEffect(.degrees(270))
-                        .offset(x: -12, y: 24)
-                        .frame(
-                            maxWidth: .infinity,
-                            maxHeight: .infinity
-                        )
-                        .layoutPriority(-1)
-                        .zIndex(-1)
-
-                    Spacer()
-
-                    VStack(spacing: 10) {
-
-                        Button {
-                            withAnimation {
-                                game.resolveEncounter()
-                            }
-                        } label: {
-                            Text("Begin Encounter")
-                                .font(.headline)
-                                .bold()
-                                .foregroundColor(.white)
-                                .frame(
-                                    width: 200,
-                                    height: 45
-                                )
-                                .background(
-                                    game.allLivingAssigned &&
-                                    !game.isGameOver
-                                    ? Color.green
-                                    : Color.gray
-                                )
-                                .cornerRadius(25)
-                                .overlay {
-                                    RoundedRectangle(
-                                        cornerRadius: 25
-                                    )
-                                    .stroke(
-                                        Color.gray.opacity(0.5),
-                                        lineWidth: 3
-                                    )
-                                }
-                        }
-                        .disabled(
-                            !game.allLivingAssigned ||
-                            game.isGameOver
-                        )
-                    }
-                    .padding(.bottom, 20)
-                }
-                .frame(
-                    width: geometry.size.width * 0.35
+                .font(
+                    .system(
+                        size: min(
+                            17,
+                            max(11, side * 0.075)
+                        ),
+                        weight: .black,
+                        design: .serif
+                    )
                 )
+                .foregroundStyle(darkBrown)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .offset(
+                    y: -side * 0.20
+                )
+                .allowsHitTesting(false)
             }
             .frame(
                 width: geometry.size.width,
                 height: geometry.size.height
             )
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Bonk, \(max(0, game.bonkHP)) of 5 HP"
+        )
+    }
+
+    // MARK: - Responsive Teammate Panel
+    // Updated by Jingyi:
+    // Preserve readable card widths.
+    // Enable scrolling when three cards cannot fit.
+
+    private var teammatePanel: some View {
+        GeometryReader { region in
+
+            let outerPadding: CGFloat = 10
+            let gap: CGFloat = 8
+            let minimumCardWidth: CGFloat = 185
+
+            let innerWidth = max(
+                0,
+                region.size.width - outerPadding * 2
+            )
+
+            let fittingCardWidth = max(
+                0,
+                (innerWidth - gap * 2) / 3
+            )
+
+            let canShowAll =
+                fittingCardWidth >= minimumCardWidth
+
+            let cardWidth = canShowAll
+                ? fittingCardWidth
+                : min(
+                    245,
+                    max(
+                        205,
+                        region.size.width * 0.66
+                    )
+                )
+
+            let cardHeight = max(
+                0,
+                region.size.height - outerPadding * 2
+            )
+
+            ScrollView(
+                .horizontal,
+                showsIndicators: !canShowAll
+            ) {
+                HStack(
+                    alignment: .top,
+                    spacing: gap
+                ) {
+
+                    ForEach(
+                        game.teammates
+                    ) { teammate in
+
+                        TeammateCardView(
+                            teammate: teammate
+                        )
+                        .frame(
+                            width: cardWidth,
+                            height: cardHeight
+                        )
+                    }
+                }
+                .padding(outerPadding)
+                .frame(
+                    minWidth: region.size.width,
+                    alignment: canShowAll
+                        ? .center
+                        : .leading
+                )
+            }
+            .background(
+                lightTan,
+                in: RoundedRectangle(
+                    cornerRadius: 12
+                )
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        Color.brown,
+                        lineWidth: 2
+                    )
+            }
+        }
+    }
+
+    // MARK: - Healer Hand
+    // Updated by Jingyi:
+    // Larger cards and a stable return-to-hand target.
+
+    private func healerHand(
+        height: CGFloat,
+        availableWidth: CGFloat
+    ) -> some View {
+
+        let cardHeight = max(
+            64,
+            height - 8
+        )
+
+        let heroWidth = min(
+            85,
+            availableWidth * 0.16
+        )
+
+        return HStack(spacing: 8) {
+
+            Image("healer card")
+                .resizable()
+                .scaledToFit()
+                .frame(
+                    width: heroWidth,
+                    height: height
+                )
+
+            ScrollView(
+                .horizontal,
+                showsIndicators: false
+            ) {
+
+                HStack(spacing: 10) {
+
+                    ForEach(
+                        game.availableCards,
+                        id: \.self
+                    ) { card in
+
+                        Image(card.imageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(
+                                height: cardHeight
+                            )
+                            .shadow(
+                                color: .black.opacity(0.2),
+                                radius: 4,
+                                y: 2
+                            )
+                            .draggable(card.rawValue)
+                            .accessibilityLabel(
+                                card.rawValue
+                            )
+                    }
+                }
+                .frame(minHeight: height)
+            }
+            .contentShape(Rectangle())
+            .dropDestination(
+                for: String.self
+            ) { items, _ in
+
+                guard let rawCard = items.first,
+                      let healerCard = HealerCard(
+                        rawValue: rawCard
+                      ) else {
+                    return false
+                }
+
+                withAnimation {
+                    game.returnToHand(
+                        card: healerCard
+                    )
+                }
+
+                return true
+            }
+        }
+        .frame(
+            maxWidth: .infinity,
+            alignment: .leading
+        )
+        .frame(height: height)
+    }
+
+    // MARK: - Begin Encounter
+    // Original game action retained.
+
+    private func beginEncounterButton(
+        compact: Bool
+    ) -> some View {
+
+        Button {
+            withAnimation {
+                game.resolveEncounter()
+            }
+        } label: {
+
+            Text("Begin Encounter")
+                .font(
+                    .system(
+                        size: compact ? 13 : 15,
+                        weight: .bold
+                    )
+                )
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .foregroundStyle(.white)
+                .frame(
+                    maxWidth: .infinity
+                )
+                .frame(
+                    height: compact ? 42 : 48
+                )
+                .background(
+                    game.allLivingAssigned &&
+                    !game.isGameOver
+                        ? Color.green
+                        : Color.gray,
+                    in: Capsule()
+                )
+                .overlay {
+                    Capsule()
+                        .stroke(
+                            Color.gray.opacity(0.5),
+                            lineWidth: 2
+                        )
+                }
+        }
+        .buttonStyle(.plain)
+        .disabled(
+            !game.allLivingAssigned ||
+            game.isGameOver
+        )
     }
 
     // MARK: - Pause Menu
-    // Added by Jingyi: Resume, Settings,
-    // How to Play and Return Home.
+    // Added by Jingyi:
+    // Scrollable on shorter landscape displays.
 
-    private var pauseOverlay: some View {
-        ZStack {
+    private func pauseOverlay(
+        compact: Bool
+    ) -> some View {
 
-            Color.black.opacity(0.56)
-                .ignoresSafeArea()
+        GeometryReader { geometry in
 
-            ScrollView {
-                VStack(spacing: 16) {
+            ZStack {
 
-                    Image(systemName: "pause.circle.fill")
-                        .font(.system(size: 36))
+                Color.black.opacity(0.56)
+                    .ignoresSafeArea()
 
-                    Text("Game Paused")
-                        .font(
-                            .system(
-                                size: 29,
-                                weight: .bold,
-                                design: .serif
-                            )
-                        )
+                ScrollView(
+                    .vertical,
+                    showsIndicators: false
+                ) {
 
-                    Text("Even heroes need a break.")
-                        .font(
-                            .system(
-                                size: 14,
-                                design: .serif
-                            )
-                        )
-                        .italic()
-                        .foregroundStyle(
-                            darkBrown.opacity(0.7)
-                        )
-                        .padding(.bottom, 7)
-
-                    pauseMenuButton(
-                        "Resume Game",
-                        icon: "play.fill",
-                        prominent: true
+                    VStack(
+                        spacing: compact ? 9 : 15
                     ) {
-                        withAnimation(
-                            .easeInOut(duration: 0.2)
+
+                        Image(
+                            systemName: "pause.circle.fill"
+                        )
+                        .font(
+                            .system(
+                                size: compact ? 27 : 36
+                            )
+                        )
+
+                        Text("Game Paused")
+                            .font(
+                                .system(
+                                    size: compact ? 25 : 29,
+                                    weight: .bold,
+                                    design: .serif
+                                )
+                            )
+
+                        Text("Even heroes need a break.")
+                            .font(
+                                .system(
+                                    size: 13,
+                                    design: .serif
+                                )
+                            )
+                            .italic()
+                            .foregroundStyle(
+                                darkBrown.opacity(0.7)
+                            )
+
+                        pauseMenuButton(
+                            "Resume Game",
+                            icon: "play.fill",
+                            prominent: true,
+                            compact: compact
                         ) {
-                            isPaused = false
+                            withAnimation {
+                                isPaused = false
+                            }
+                        }
+
+                        pauseMenuButton(
+                            "Settings",
+                            icon: "gearshape.fill",
+                            compact: compact
+                        ) {
+                            showSettings = true
+                        }
+
+                        pauseMenuButton(
+                            "How to Play",
+                            icon: "book.closed.fill",
+                            compact: compact
+                        ) {
+                            showHowToPlay = true
+                        }
+
+                        pauseMenuButton(
+                            "Return Home",
+                            icon: "house.fill",
+                            compact: compact
+                        ) {
+                            confirmReturnHome = true
                         }
                     }
-
-                    pauseMenuButton(
-                        "Settings",
-                        icon: "gearshape.fill"
-                    ) {
-                        showSettings = true
-                    }
-
-                    pauseMenuButton(
-                        "How to Play",
-                        icon: "book.closed.fill"
-                    ) {
-                        showHowToPlay = true
-                    }
-
-                    pauseMenuButton(
-                        "Return Home",
-                        icon: "house.fill"
-                    ) {
-                        confirmReturnHome = true
-                    }
-                }
-                .foregroundStyle(darkBrown)
-                .padding(24)
-                .frame(maxWidth: 360)
-                .background(
-                    paper,
-                    in: RoundedRectangle(cornerRadius: 20)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 20)
+                    .foregroundStyle(darkBrown)
+                    .padding(
+                        compact ? 15 : 22
+                    )
+                    .frame(maxWidth: 420)
+                    .background(
+                        paper,
+                        in: RoundedRectangle(
+                            cornerRadius: 20
+                        )
+                    )
+                    .overlay {
+                        RoundedRectangle(
+                            cornerRadius: 20
+                        )
                         .stroke(
                             darkBrown,
                             lineWidth: 2
                         )
+                    }
+                    .shadow(
+                        color: .black.opacity(0.2),
+                        radius: 15,
+                        y: 8
+                    )
+                    .padding(12)
+                    .frame(maxWidth: .infinity)
                 }
-                .shadow(
-                    color: .black.opacity(0.2),
-                    radius: 15,
-                    y: 8
+                .frame(
+                    maxWidth: min(
+                        520,
+                        geometry.size.width
+                    ),
+                    maxHeight: geometry.size.height
                 )
-                .padding(20)
-                .frame(maxWidth: .infinity)
             }
-            .frame(maxHeight: 530)
         }
     }
 
-    // MARK: - Pause Menu Buttons
-    // Added by Jingyi: Reusable button styling.
+    // MARK: - Pause Menu Button
 
     private func pauseMenuButton(
         _ title: String,
         icon: String,
         prominent: Bool = false,
+        compact: Bool,
         action: @escaping () -> Void
     ) -> some View {
 
         Button(action: action) {
 
-            HStack(spacing: 12) {
+            HStack(spacing: 11) {
 
                 Image(systemName: icon)
-                    .font(.system(size: 17))
-                    .frame(width: 24)
+                    .font(.system(size: 16))
+                    .frame(width: 23)
 
                 Text(title)
                     .font(
                         .system(
-                            size: 16,
+                            size: compact ? 14 : 16,
                             weight: .semibold
                         )
                     )
 
-                Spacer()
+                Spacer(minLength: 4)
 
                 if !prominent {
-                    Image(systemName: "chevron.right")
-                        .font(.caption.bold())
+                    Image(
+                        systemName: "chevron.right"
+                    )
+                    .font(.caption.bold())
                 }
             }
             .foregroundStyle(
-                prominent ? Color.white : darkBrown
+                prominent
+                    ? Color.white
+                    : darkBrown
             )
-            .padding(.horizontal, 17)
-            .frame(height: 51)
+            .padding(.horizontal, 15)
+            .frame(
+                height: compact ? 40 : 49
+            )
             .background(
-                prominent ? darkBrown : backgroundTan,
-                in: RoundedRectangle(cornerRadius: 12)
+                prominent
+                    ? darkBrown
+                    : backgroundTan,
+                in: RoundedRectangle(
+                    cornerRadius: 12
+                )
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(
-                        darkBrown.opacity(
-                            prominent ? 0 : 0.4
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(
+                    cornerRadius: 12
+                )
+                .stroke(
+                    darkBrown.opacity(
+                        prominent ? 0 : 0.4
+                    ),
+                    lineWidth: 1
+                )
             }
         }
         .buttonStyle(.plain)
     }
 
     // MARK: - Player Avatar
-    // Added by Jingyi: Displays saved player avatar.
 
     private var playerAvatarButton: some View {
+
         ZStack {
 
             Circle()
@@ -649,7 +969,10 @@ struct GameBoardView: View {
                     .padding(5)
             }
         }
-        .frame(width: 44, height: 44)
+        .frame(
+            width: 44,
+            height: 44
+        )
         .clipShape(Circle())
         .overlay {
             Circle()
@@ -661,8 +984,6 @@ struct GameBoardView: View {
     }
 
     // MARK: - Load Saved Avatar
-    // Added by Jingyi: Uses the same local
-    // avatar path as PlayerProfileView.
 
     private func loadAvatar() {
 
@@ -687,9 +1008,8 @@ struct GameBoardView: View {
     }
 }
 
-// MARK: - Battle How to Play
-// Added by Jingyi: Centered in-game tutorial layout.
-// Original gameplay instructions are preserved.
+// MARK: - How to Play
+// Added by Jingyi: Responsive instruction sheet.
 
 private struct BattleHowToPlayView: View {
 
@@ -697,49 +1017,56 @@ private struct BattleHowToPlayView: View {
     private var dismiss
 
     private let backgroundTan = Color(
-        red: 252 / 255,
-        green: 220 / 255,
-        blue: 187 / 255
+        red: 252.0 / 255,
+        green: 220.0 / 255,
+        blue: 187.0 / 255
     )
 
     private let paper = Color(
-        red: 255 / 255,
-        green: 243 / 255,
-        blue: 228 / 255
+        red: 1,
+        green: 243.0 / 255,
+        blue: 228.0 / 255
     )
 
     private let brown = Color(
-        red: 89 / 255,
-        green: 59 / 255,
-        blue: 46 / 255
+        red: 89.0 / 255,
+        green: 59.0 / 255,
+        blue: 46.0 / 255
     )
 
     private let outline = Color(
-        red: 190 / 255,
-        green: 151 / 255,
-        blue: 119 / 255
+        red: 190.0 / 255,
+        green: 151.0 / 255,
+        blue: 119.0 / 255
     )
 
-    // MARK: - Main Layout
-
     var body: some View {
+
         GeometryReader { geometry in
 
+            let compact =
+                geometry.size.height < 410
+
             ZStack {
+
                 backgroundTan
                     .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 20) {
+                ScrollView(
+                    .vertical,
+                    showsIndicators: false
+                ) {
 
-                        // Title
+                    VStack(
+                        spacing: compact ? 12 : 20
+                    ) {
 
-                        VStack(spacing: 10) {
+                        VStack(spacing: 8) {
 
                             Text("How to Play")
                                 .font(
                                     .system(
-                                        size: 32,
+                                        size: compact ? 26 : 32,
                                         weight: .black,
                                         design: .serif
                                     )
@@ -751,61 +1078,69 @@ private struct BattleHowToPlayView: View {
                                     .fill(outline)
                                     .frame(height: 1)
 
-                                Image(systemName: "swords")
-                                    .font(.system(size: 18))
+                                Image(
+                                    systemName: "swords"
+                                )
 
                                 Rectangle()
                                     .fill(outline)
                                     .frame(height: 1)
                             }
-                            .padding(.horizontal, 16)
                         }
 
-                        // Original game rules
-
-                        VStack(spacing: 12) {
+                        VStack(
+                            spacing: compact ? 8 : 12
+                        ) {
 
                             ruleCard(
-                                number: "01",
-                                text: "Each idiot draws 2 possible moves and will always pick the most self-destructive one."
+                                "01",
+                                "Each idiot draws 2 possible moves and will always pick the most self-destructive one.",
+                                compact: compact
                             )
 
                             ruleCard(
-                                number: "02",
-                                text: "Drag Heal (+1 HP), Reverse, or Do Nothing onto each idiot before starting the encounter."
+                                "02",
+                                "Drag Heal (+1 HP), Reverse, or Do Nothing onto each idiot before starting the encounter.",
+                                compact: compact
                             )
 
                             ruleCard(
-                                number: "03",
-                                text: "Use Reverse to redirect self-damage or friendly fire straight onto Bonk!"
+                                "03",
+                                "Use Reverse to redirect self-damage or friendly fire straight onto Bonk!",
+                                compact: compact
                             )
 
                             ruleCard(
-                                number: "04",
-                                text: "Win by dropping Bonk to 0 HP. Lose if two idiots become ghosts."
+                                "04",
+                                "Win by dropping Bonk to 0 HP. Lose if two idiots become ghosts.",
+                                compact: compact
                             )
                         }
-
-                        // Close button
 
                         Button {
                             dismiss()
                         } label: {
+
                             Text("Got It")
                                 .font(.headline.bold())
                                 .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 50)
+                                .frame(
+                                    maxWidth: .infinity
+                                )
+                                .frame(
+                                    height: compact ? 40 : 50
+                                )
                                 .background(
                                     brown,
                                     in: Capsule()
                                 )
                         }
                         .buttonStyle(.plain)
-                        .padding(.top, 4)
                     }
                     .foregroundStyle(brown)
-                    .padding(20)
+                    .padding(
+                        compact ? 14 : 20
+                    )
                     .background(
                         paper.opacity(0.58),
                         in: RoundedRectangle(
@@ -813,59 +1148,67 @@ private struct BattleHowToPlayView: View {
                         )
                     )
                     .overlay {
-                        RoundedRectangle(cornerRadius: 22)
-                            .stroke(
-                                outline.opacity(0.85),
-                                lineWidth: 1.2
-                            )
+                        RoundedRectangle(
+                            cornerRadius: 22
+                        )
+                        .stroke(
+                            outline.opacity(0.85),
+                            lineWidth: 1.2
+                        )
                     }
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 24)
                     .frame(maxWidth: 520)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
                     .frame(
-                        maxWidth: .infinity,
-                        minHeight: geometry.size.height,
-                        alignment: .center
+                        maxWidth: .infinity
                     )
                 }
-                .scrollIndicators(.hidden)
+                .frame(
+                    maxHeight: geometry.size.height
+                )
             }
         }
         .presentationDragIndicator(.visible)
     }
 
     // MARK: - Rule Card
-    // Added by Jingyi: Individual numbered rule cards.
 
     private func ruleCard(
-        number: String,
-        text: String
+        _ number: String,
+        _ text: String,
+        compact: Bool
     ) -> some View {
 
         HStack(
             alignment: .top,
-            spacing: 12
+            spacing: 11
         ) {
 
             Text(number)
                 .font(
                     .system(
-                        size: 17,
+                        size: compact ? 14 : 17,
                         weight: .bold,
                         design: .serif
                     )
                 )
                 .frame(
-                    width: 28,
+                    width: 27,
                     alignment: .leading
                 )
 
             Rectangle()
-                .fill(outline.opacity(0.7))
+                .fill(
+                    outline.opacity(0.7)
+                )
                 .frame(width: 1)
 
             Text(text)
-                .font(.system(size: 15))
+                .font(
+                    .system(
+                        size: compact ? 13 : 15
+                    )
+                )
                 .fixedSize(
                     horizontal: false,
                     vertical: true
@@ -876,7 +1219,9 @@ private struct BattleHowToPlayView: View {
                 )
         }
         .foregroundStyle(brown)
-        .padding(15)
+        .padding(
+            compact ? 10 : 15
+        )
         .frame(
             maxWidth: .infinity,
             alignment: .leading
@@ -888,17 +1233,20 @@ private struct BattleHowToPlayView: View {
             )
         )
         .overlay {
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(
-                    outline.opacity(0.55),
-                    lineWidth: 1
-                )
+            RoundedRectangle(
+                cornerRadius: 14
+            )
+            .stroke(
+                outline.opacity(0.55),
+                lineWidth: 1
+            )
         }
     }
 }
 
-// MARK: - Existing Game Over Overlay
-// Original game result interface retained.
+// MARK: - Game Over Overlay
+// Original game actions retained.
+// Updated by Jingyi: Responsive result layout.
 
 struct GameOverOverlayView: View {
 
@@ -906,94 +1254,142 @@ struct GameOverOverlayView: View {
     let onPlayAgain: () -> Void
     let onReturnHome: () -> Void
 
-    let darkBrown = Color(
+    private let darkBrown = Color(
         red: 0.35,
         green: 0.23,
         blue: 0.18
     )
 
-    let cardTan = Color(
+    private let cardTan = Color(
         red: 0.98,
         green: 0.88,
         blue: 0.74
     )
 
     var body: some View {
-        ZStack {
 
-            Color.black.opacity(0.6)
-                .ignoresSafeArea()
+        GeometryReader { geometry in
 
-            VStack(spacing: 18) {
+            let compact =
+                geometry.size.height < 410
 
-                Text(didWin ? "YOU WIN!" : "YOU LOST!")
-                    .font(
-                        .system(
-                            size: 38,
-                            weight: .black,
-                            design: .serif
+            ZStack {
+
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+
+                ScrollView(
+                    .vertical,
+                    showsIndicators: false
+                ) {
+
+                    VStack(
+                        spacing: compact ? 11 : 18
+                    ) {
+
+                        Text(
+                            didWin
+                                ? "YOU WIN!"
+                                : "YOU LOST!"
+                        )
+                        .font(
+                            .system(
+                                size: compact ? 29 : 38,
+                                weight: .black,
+                                design: .serif
+                            )
+                        )
+                        .foregroundStyle(
+                            didWin
+                                ? Color.green
+                                : Color.red
+                        )
+
+                        Text(
+                            didWin
+                                ? "Bonk has been defeated!"
+                                : "Two idiots became ghosts!"
+                        )
+                        .font(.headline)
+                        .foregroundStyle(darkBrown)
+                        .multilineTextAlignment(.center)
+
+                        HStack(spacing: 12) {
+
+                            Button(
+                                action: onPlayAgain
+                            ) {
+                                Text("Play Again")
+                                    .font(
+                                        .headline.bold()
+                                    )
+                                    .foregroundStyle(.white)
+                                    .frame(
+                                        maxWidth: .infinity
+                                    )
+                                    .frame(height: 44)
+                                    .background(
+                                        Color.green,
+                                        in: Capsule()
+                                    )
+                            }
+
+                            Button(
+                                action: onReturnHome
+                            ) {
+                                Text("Return Home")
+                                    .font(
+                                        .headline.bold()
+                                    )
+                                    .foregroundStyle(darkBrown)
+                                    .frame(
+                                        maxWidth: .infinity
+                                    )
+                                    .frame(height: 44)
+                                    .background(
+                                        Color.white,
+                                        in: Capsule()
+                                    )
+                                    .overlay {
+                                        Capsule()
+                                            .stroke(
+                                                darkBrown,
+                                                lineWidth: 2
+                                            )
+                                    }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(
+                        compact ? 18 : 28
+                    )
+                    .frame(maxWidth: 430)
+                    .background(
+                        cardTan,
+                        in: RoundedRectangle(
+                            cornerRadius: 20
                         )
                     )
-                    .foregroundColor(
-                        didWin ? .green : .red
+                    .overlay {
+                        RoundedRectangle(
+                            cornerRadius: 20
+                        )
+                        .stroke(
+                            darkBrown,
+                            lineWidth: 3
+                        )
+                    }
+                    .shadow(radius: 15)
+                    .padding(12)
+                    .frame(
+                        maxWidth: .infinity
                     )
-
-                Text(
-                    didWin
-                    ? "Bonk has been defeated!"
-                    : "Two idiots became ghosts!"
-                )
-                .font(.headline)
-                .foregroundColor(darkBrown)
-
-                HStack(spacing: 16) {
-
-                    Button(action: onPlayAgain) {
-                        Text("Play Again")
-                            .font(.headline.bold())
-                            .foregroundColor(.white)
-                            .frame(
-                                width: 140,
-                                height: 44
-                            )
-                            .background(Color.green)
-                            .cornerRadius(22)
-                    }
-
-                    Button(action: onReturnHome) {
-                        Text("Return Home")
-                            .font(.headline.bold())
-                            .foregroundColor(darkBrown)
-                            .frame(
-                                width: 140,
-                                height: 44
-                            )
-                            .background(.white)
-                            .cornerRadius(22)
-                            .overlay {
-                                RoundedRectangle(
-                                    cornerRadius: 22
-                                )
-                                .stroke(
-                                    darkBrown,
-                                    lineWidth: 2
-                                )
-                            }
-                    }
                 }
-                .padding(.top, 6)
+                .frame(
+                    maxHeight: geometry.size.height
+                )
             }
-            .padding(28)
-            .background(cardTan)
-            .cornerRadius(20)
-            .overlay {
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(
-                        darkBrown,
-                        lineWidth: 3
-                    )
-            }
-            .shadow(radius: 15)
         }
     }
 }
