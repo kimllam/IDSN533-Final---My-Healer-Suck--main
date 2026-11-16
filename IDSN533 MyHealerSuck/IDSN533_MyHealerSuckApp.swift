@@ -11,7 +11,6 @@ import SwiftUI
 import FirebaseCore
 
 // MARK: - Firebase App Delegate
-// Added by Jingyi: Configure Firebase during app launch.
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
 
@@ -20,7 +19,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions:
             [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-
         if FirebaseApp.app() == nil {
             FirebaseApp.configure()
         }
@@ -29,21 +27,23 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 }
 
+// MARK: - Main App
+
 @main
 struct MyHealerSucksApp: App {
+
+    @Environment(\.scenePhase)
+    private var scenePhase
 
     @UIApplicationDelegateAdaptor(AppDelegate.self)
     private var delegate
 
-    // Original game state retained.
     @StateObject private var game = GameManager()
 
-    // Added by Jingyi: Shared authentication state.
     @StateObject private var authManager: AuthManager
 
     init() {
-
-        // Ensure Firebase is ready before AuthManager.
+        // Configure Firebase before creating AuthManager.
         if FirebaseApp.app() == nil {
             FirebaseApp.configure()
         }
@@ -60,7 +60,14 @@ struct MyHealerSucksApp: App {
             }
             .environmentObject(game)
             .environmentObject(authManager)
+            .onChange(
+                of: scenePhase,
+                initial: true
+            ) { _, phase in
+                AudioManager.shared.setApplicationActive(
+                    phase == .active
+                )
+            }
         }
     }
 }
-

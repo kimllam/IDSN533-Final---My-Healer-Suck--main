@@ -25,6 +25,7 @@
 		AE8A441630AA4B750054775D /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A441530AA4B680054775D /* AuthView.swift */; };
 		AE8A444330AA51410054775D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AE8A444230AA51410054775D /* FirebaseAuth */; };
 		AE8A444530AA52700054775D /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A444430AA526D0054775D /* AuthManager.swift */; };
+		EC393A7530AB6CD600C8514A /* kiravale-medieval-music-593694.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = EC393A7430AB6CD400C8514A /* kiravale-medieval-music-593694.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +47,7 @@
 		AE8A441330AA4AB00054775D /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		AE8A441530AA4B680054775D /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		AE8A444430AA526D0054775D /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		EC393A7430AB6CD400C8514A /* kiravale-medieval-music-593694.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "kiravale-medieval-music-593694.mp3"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +77,7 @@
 				A6F6E45030A56F9C00C0CB1D /* Models */,
 				A6F6E44430A56F6900C0CB1D /* IDSN533 MyHealerSuck */,
 				A6F6E44330A56F6900C0CB1D /* Products */,
+				EC393A7430AB6CD400C8514A /* kiravale-medieval-music-593694.mp3 */,
 			);
 			sourceTree = "<group>";
 		};
@@ -185,6 +188,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC393A7530AB6CD600C8514A /* kiravale-medieval-music-593694.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,7 +350,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 54Y26DR588;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "My Healer Sucks!";
@@ -379,7 +383,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 54Y26DR588;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "My Healer Sucks!";
