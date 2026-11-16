@@ -167,6 +167,12 @@ class GameManager: ObservableObject {
             for teammate in teammates {
                 teammate.prepareNextTurn()
             }
+            // A new ghost already has its first theft queued. Two ghosts end the game.
+            if pendingThefts.isEmpty, let ghostID = stolenCards.keys.first,
+               let nextCard = HealerCard.allCases.filter({ !stolenCards.values.contains($0) }).randomElement() {
+                stolenCards[ghostID] = nextCard
+                pendingThefts.append(GhostTheft(id: ghostID, card: nextCard))
+            }
             availableCards = HealerCard.allCases.filter { !stolenCards.values.contains($0) }
         }
     }
