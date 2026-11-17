@@ -104,177 +104,184 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Title Logo
+
+        private var titleLogo: some View {
+            Image("GameTitle")
+                .resizable()
+                .scaledToFit()
+                .allowsHitTesting(false)
+                .accessibilityLabel("My Healer Sucks!")
+        }
+
     // MARK: - Portrait Controls
-    // Settings at the upper-right (inside safe area).
-    // Both actions sit above the home indicator.
 
-    private func portraitControls(
-        screen: CGSize,
-        insets: EdgeInsets
-    ) -> some View {
+        private func portraitControls(
+            screen: CGSize,
+            insets: EdgeInsets
+        ) -> some View {
 
-        let safeWidth = max(
-            0,
-            screen.width - insets.leading - insets.trailing
-        )
+            let safeWidth = max(
+                0,
+                screen.width - insets.leading - insets.trailing
+            )
 
-        let safeHeight = max(
-            0,
-            screen.height - insets.top - insets.bottom
-        )
+            let safeHeight = max(
+                0,
+                screen.height - insets.top - insets.bottom
+            )
 
-        let compact = safeHeight < 650
+            let compact = safeHeight < 650
 
-        let buttonWidth = max(
-            0,
-            min(340, safeWidth - 48)
-        )
+            let buttonWidth = max(
+                0,
+                min(340, safeWidth - 48)
+            )
 
-        return ZStack {
+            return ZStack {
 
-            // MARK: - Portrait Action Buttons
+                // MARK: - Portrait Settings & Large Title
 
-            VStack(spacing: 0) {
+                VStack(spacing: compact ? 8 : 14) {
+                    HStack {
+                        Spacer(minLength: 0)
+                        settingsButton
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.top, 8)
 
-                Spacer(minLength: 0)
+                    titleLogo
+                        .frame(
+                            maxWidth: safeWidth * 0.92,
+                            maxHeight: compact ? 110 : 150
+                        )
+                        .padding(.horizontal, 12)
 
-                VStack(
-                    spacing: compact ? 10 : 14
-                ) {
-                    playButton
-                    howToPlayButton
+                    Spacer(minLength: 0)
                 }
-                .frame(width: buttonWidth)
-                .padding(
-                    .bottom,
-                    compact ? 16 : 28
-                )
-            }
 
-            // MARK: - Portrait Settings
+                // MARK: - Portrait Action Buttons
 
-            VStack {
-                HStack {
+                VStack(spacing: 0) {
+
                     Spacer(minLength: 0)
 
-                    settingsButton
-                }
-                .padding(.trailing, 16)
-                .padding(.top, 8)
-
-                Spacer(minLength: 0)
-            }
-        }
-        .frame(
-            width: safeWidth,
-            height: safeHeight
-        )
-        .position(
-            x: insets.leading + safeWidth / 2,
-            y: insets.top + safeHeight / 2
-        )
-    }
-
-    // MARK: - Landscape Controls
-    // Updated by Jingyi:
-    // - Positioned in full-screen coordinates, the same
-    //   space the artwork uses.
-    // - Centered under the painted title (~80% of width).
-    // - Clamped so it never enters the right safe area
-    //   and never drifts left onto the characters.
-    // - Vertically placed between the tagline and the
-    //   bottom caption.
-
-    private func landscapeControls(
-        screen: CGSize,
-        insets: EdgeInsets
-    ) -> some View {
-
-        let compact = screen.height < 400
-        let gap: CGFloat = compact ? 10 : 12
-        let settingsSize: CGFloat = 46
-        let playHeight: CGFloat = 52
-        let secondaryHeight: CGFloat = 46
-
-        // Panel width roughly matches the title width.
-
-        let panelWidth = min(
-            300,
-            max(230, screen.width * 0.27)
-        )
-
-        let groupHeight =
-            playHeight + gap + secondaryHeight
-
-        // MARK: Horizontal position
-
-        // Center of the "My Healer Sucks!" title in the artwork.
-        let titleCenterX = screen.width * 0.80
-
-        // Right edge must stay inside the safe area.
-        let maxCenterX =
-            screen.width
-            - insets.trailing
-            - 12
-            - panelWidth / 2
-
-        // Left edge must stay clear of the illustration.
-        let minCenterX =
-            screen.width * 0.60
-            + panelWidth / 2
-
-        let centerX = max(
-            minCenterX,
-            min(titleCenterX, maxCenterX)
-        )
-
-        // MARK: Vertical position
-
-        // Between the tagline (~42%) and the caption (~90%).
-        let preferredCenterY = screen.height * 0.64
-
-        let maxCenterY =
-            screen.height
-            - insets.bottom
-            - 12
-            - groupHeight / 2
-
-        let centerY = min(
-            preferredCenterY,
-            maxCenterY
-        )
-
-        return VStack(spacing: gap) {
-
-            // MARK: - Main Action
-
-            playButton
-
-            // MARK: - Secondary Actions
-
-            HStack(spacing: gap) {
-
-                howToPlayButton
-                    .frame(maxWidth: .infinity)
-
-                settingsButton
-                    .frame(
-                        width: settingsSize,
-                        height: settingsSize
+                    VStack(
+                        spacing: compact ? 10 : 14
+                    ) {
+                        playButton
+                        howToPlayButton
+                    }
+                    .frame(width: buttonWidth)
+                    .padding(
+                        .bottom,
+                        compact ? 16 : 28
                     )
+                }
             }
+            .frame(
+                width: safeWidth,
+                height: safeHeight
+            )
+            .position(
+                x: insets.leading + safeWidth / 2,
+                y: insets.top + safeHeight / 2
+            )
         }
-        .frame(width: panelWidth)
-        .position(
-            x: centerX,
-            y: centerY
-        )
-        .frame(
-            width: screen.width,
-            height: screen.height
-        )
-    }
 
+        // MARK: - Landscape Controls
+
+        private func landscapeControls(
+            screen: CGSize,
+            insets: EdgeInsets
+        ) -> some View {
+
+            let compact = screen.height < 400
+            let gap: CGFloat = compact ? 10 : 12
+            let settingsSize: CGFloat = 46
+            let playHeight: CGFloat = 52
+            let secondaryHeight: CGFloat = 46
+            let titleMaxHeight: CGFloat = compact ? 110 : 140
+
+            // Buttons stay compact while the title spans the full right-side parchment space
+            let panelWidth = min(
+                290,
+                max(220, screen.width * 0.25)
+            )
+
+            let rightZoneStart = screen.width * 0.64999
+            let rightZoneEnd = screen.width - insets.trailing - 12
+            let availableTitleWidth = max(panelWidth, rightZoneEnd - rightZoneStart)
+            let titleWidth = min(500, availableTitleWidth)
+
+            let groupHeight =
+                titleMaxHeight + gap + playHeight + gap + secondaryHeight
+
+            // MARK: Horizontal position
+
+            let preferredCenterX = screen.width * 0.78
+            let maxCenterX = rightZoneEnd - titleWidth / 2
+            let minCenterX = rightZoneStart + titleWidth / 2
+
+            let centerX = max(
+                minCenterX,
+                min(preferredCenterX, maxCenterX)
+            )
+
+            // MARK: Vertical position
+
+            let preferredCenterY = screen.height * 0.45
+            let maxCenterY =
+                screen.height
+                - insets.bottom
+                - 12
+                - groupHeight / 2
+
+            let centerY = min(
+                preferredCenterY,
+                maxCenterY
+            )
+
+            return VStack(spacing: gap) {
+
+                // MARK: - Oversized Title PNG
+
+                titleLogo
+                    .frame(
+                        width: titleWidth,
+                        height: titleMaxHeight
+                    )
+                    .padding(.bottom, compact ? 2 : 6)
+
+                // MARK: - Main Action
+
+                playButton
+                    .frame(width: panelWidth)
+
+                // MARK: - Secondary Actions
+
+                HStack(spacing: gap) {
+
+                    howToPlayButton
+                        .frame(maxWidth: .infinity)
+
+                    settingsButton
+                        .frame(
+                            width: settingsSize,
+                            height: settingsSize
+                        )
+                }
+                .frame(width: panelWidth)
+            }
+            .position(
+                x: centerX,
+                y: centerY
+            )
+            .frame(
+                width: screen.width,
+                height: screen.height
+            )
+        }
     // MARK: - Settings Button
     // Added by Jingyi:
     // Keep the original circular design.
