@@ -68,7 +68,7 @@ struct MyHealerSucksApp: App {
                 HomeView()
 
             }
-            .id(navigation.homeResetID)
+            
 
             // Shared game state
             .environmentObject(game)
