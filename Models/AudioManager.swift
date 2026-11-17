@@ -8,11 +8,20 @@
 
 import Foundation
 import AVFoundation
+import UIKit
 
 @MainActor
-final class AudioManager {
+final class AudioManager: NSObject {
 
     static let shared = AudioManager()
+
+    // Default slider setting of 70% plays at 35% player volume.
+    private let musicGain: Float = 0.2
+
+    private var applicationIsActive = false
+    private var isInterrupted = false
+    private var currentMusicName: String?
+    private var currentMusicExtension: String?
 
     private var musicPlayer: AVAudioPlayer?
     private var ambientPlayer: AVAudioPlayer?
@@ -26,8 +35,89 @@ final class AudioManager {
     private var ambientVolume: Float = 0.5
     private var sfxVolume: Float = 0.8
 
-    private init() {
+    private override init() {
+        super.init()
         loadSavedSettings()
+
+        do {
+            // Respect Silent Mode and allow other audio to continue.
+            try AVAudioSession.sharedInstance().setCategory(
+                .ambient,
+                mode: .default
+            )
+        } catch {
+            print(
+                "Audio session configuration error: \(error.localizedDescription)"
+            )
+        }
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleInterruption(_:)),
+            name: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance()
+        )
+    }
+
+    // MARK: - App Lifecycle
+
+    func setApplicationActive(_ active: Bool) {
+        applicationIsActive = active
+
+        if active {
+            loadSavedSettings()
+
+            if musicPlayer == nil {
+                playMusic(named: "kiravale-medieval-music-593694")
+            } else {
+                updatePlayers()
+            }
+        } else {
+            musicPlayer?.pause()
+            ambientPlayer?.pause()
+            effectsPlayer?.stop()
+        }
+    }
+
+    @objc private func handleInterruption(
+        _ notification: Notification
+    ) {
+        guard
+            let rawType = notification.userInfo?[
+                AVAudioSessionInterruptionTypeKey
+            ] as? UInt,
+            let type = AVAudioSession.InterruptionType(
+                rawValue: rawType
+            )
+        else {
+            return
+        }
+
+        switch type {
+        case .began:
+            isInterrupted = true
+            musicPlayer?.pause()
+            ambientPlayer?.pause()
+            effectsPlayer?.stop()
+
+        case .ended:
+            isInterrupted = false
+
+            let rawOptions = notification.userInfo?[
+                AVAudioSessionInterruptionOptionKey
+            ] as? UInt ?? 0
+
+            let options = AVAudioSession.InterruptionOptions(
+                rawValue: rawOptions
+            )
+
+            if options.contains(.shouldResume) {
+                updatePlayers()
+            }
+
+        @unknown default:
+            break
+        }
     }
 
     // MARK: - Saved Preferences
@@ -101,16 +191,21 @@ final class AudioManager {
         named name: String,
         extension fileExtension: String = "mp3"
     ) {
-        musicPlayer = makePlayer(
-            named: name,
-            fileExtension: fileExtension,
-            loop: true
-        )
+        if musicPlayer == nil
+            || currentMusicName != name
+            || currentMusicExtension != fileExtension {
 
-        musicPlayer?.volume =
-            musicEnabled ? musicVolume : 0
+            musicPlayer = makePlayer(
+                named: name,
+                fileExtension: fileExtension,
+                loop: true
+            )
 
-        musicPlayer?.play()
+            currentMusicName = name
+            currentMusicExtension = fileExtension
+        }
+
+        updatePlayers()
     }
 
     // MARK: - Ambient Sounds
@@ -125,10 +220,7 @@ final class AudioManager {
             loop: true
         )
 
-        ambientPlayer?.volume =
-            ambientEnabled ? ambientVolume : 0
-
-        ambientPlayer?.play()
+        updatePlayers()
     }
 
     // MARK: - Sound Effects
@@ -137,7 +229,11 @@ final class AudioManager {
         named name: String,
         extension fileExtension: String = "wav"
     ) {
-        guard sfxEnabled else {
+        guard
+            sfxEnabled,
+            applicationIsActive,
+            !isInterrupted
+        else {
             return
         }
 
@@ -158,7 +254,6 @@ final class AudioManager {
         fileExtension: String,
         loop: Bool
     ) -> AVAudioPlayer? {
-
         guard let url = Bundle.main.url(
             forResource: name,
             withExtension: fileExtension
@@ -178,12 +273,10 @@ final class AudioManager {
             player.prepareToPlay()
 
             return player
-
         } catch {
             print(
                 "Audio playback error: \(error.localizedDescription)"
             )
-
             return nil
         }
     }
@@ -191,14 +284,38 @@ final class AudioManager {
     // MARK: - Apply Volumes
 
     private func updatePlayers() {
-        musicPlayer?.volume =
-            musicEnabled ? musicVolume : 0
+        musicPlayer?.volume = musicVolume * musicGain
+        ambientPlayer?.volume = ambientVolume
+        effectsPlayer?.volume = sfxEnabled ? sfxVolume : 0
 
-        ambientPlayer?.volume =
-            ambientEnabled ? ambientVolume : 0
+        guard applicationIsActive, !isInterrupted else {
+            return
+        }
 
-        effectsPlayer?.volume =
-            sfxEnabled ? sfxVolume : 0
+        do {
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print(
+                "Audio session activation error: \(error.localizedDescription)"
+            )
+            return
+        }
+
+        if musicEnabled {
+            if musicPlayer?.isPlaying == false {
+                musicPlayer?.play()
+            }
+        } else {
+            musicPlayer?.pause()
+        }
+
+        if ambientEnabled {
+            if ambientPlayer?.isPlaying == false {
+                ambientPlayer?.play()
+            }
+        } else {
+            ambientPlayer?.pause()
+        }
     }
 
     // MARK: - Stop Audio
@@ -218,5 +335,67 @@ final class AudioManager {
         stopAmbient()
         effectsPlayer?.stop()
         effectsPlayer = nil
+    }
+}
+
+// MARK: - Haptic Feedback
+// Keep this class in AudioManager.swift.
+
+@MainActor
+final class HapticsManager {
+
+    static let shared = HapticsManager()
+
+    private let selection = UISelectionFeedbackGenerator()
+
+    private let impact = UIImpactFeedbackGenerator(
+        style: .medium
+    )
+
+    private let gentleImpact = UIImpactFeedbackGenerator(
+        style: .light
+    )
+
+    private let notification = UINotificationFeedbackGenerator()
+
+    private var enabled: Bool {
+        let hapticsEnabled = UserDefaults.standard.object(
+            forKey: "hapticsEnabled"
+        ) as? Bool ?? true
+
+        return hapticsEnabled
+            && UIApplication.shared.applicationState == .active
+    }
+
+    private init() {}
+
+    func cardPlaced() {
+        guard enabled else { return }
+
+        selection.selectionChanged()
+        selection.prepare()
+    }
+
+    func damage() {
+        guard enabled else { return }
+
+        impact.impactOccurred()
+        impact.prepare()
+    }
+
+    func heal() {
+        guard enabled else { return }
+
+        gentleImpact.impactOccurred(intensity: 0.6)
+        gentleImpact.prepare()
+    }
+
+    func gameOver(won: Bool) {
+        guard enabled else { return }
+
+        notification.notificationOccurred(
+            won ? .success : .error
+        )
+        notification.prepare()
     }
 }

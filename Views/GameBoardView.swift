@@ -1,4 +1,3 @@
-
 //
 //  GameBoardView.swift
 //  IDSN533 MyHealerSuck
@@ -113,6 +112,20 @@ struct GameBoardView: View {
                         }
                     )
                     .zIndex(10)
+                }
+
+                // MARK: - Move Inspect Overlay
+
+                if let teammate = game.inspectedTeammate,
+                   !game.isResolving,
+                   !game.isGameOver {
+                    MoveInspectOverlayView(teammate: teammate) {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            game.inspectedTeammate = nil
+                        }
+                    }
+                    .zIndex(15)
+                    .transition(.opacity)
                 }
 
                 // MARK: - Pause
@@ -978,6 +991,67 @@ struct GameBoardView: View {
     }
 }
 
+// MARK: - Move Inspect Overlay
+
+struct MoveInspectOverlayView: View {
+    @ObservedObject var teammate: Teammate
+    let onDismiss: () -> Void
+
+    private let darkBrown = Color(red: 0.35, green: 0.23, blue: 0.18)
+    private let cardTan = Color(red: 0.98, green: 0.88, blue: 0.74)
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                Color.black.opacity(0.65)
+                    .ignoresSafeArea()
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        onDismiss()
+                    }
+
+                VStack(spacing: 12) {
+                    HStack(spacing: 8) {
+                        Image(teammate.headImageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 30, height: 30)
+
+                        Text("\(teammate.name)'s Possible Moves")
+                            .font(.system(size: 16, weight: .black, design: .serif))
+                            .foregroundStyle(darkBrown)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(cardTan, in: Capsule())
+                    .overlay(Capsule().stroke(darkBrown, lineWidth: 2))
+
+                    HStack(spacing: 16) {
+                        IdiotMoveCardView(card: teammate.optionA)
+                            .shadow(color: .black.opacity(0.35), radius: 8, y: 4)
+
+                        IdiotMoveCardView(card: teammate.optionB)
+                            .shadow(color: .black.opacity(0.35), radius: 8, y: 4)
+                    }
+                    .frame(
+                        maxWidth: min(460, geo.size.width - 32),
+                        maxHeight: min(280, geo.size.height * 0.62)
+                    )
+                    .onTapGesture { }
+
+                    Text("Tap outside to close")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white.opacity(0.9))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(Color.black.opacity(0.45), in: Capsule())
+                }
+                .padding()
+            }
+        }
+    }
+}
+
 // MARK: - How to Play
 
 private struct BattleHowToPlayView: View {
@@ -1137,7 +1211,9 @@ private struct BattleHowToPlayView: View {
                 )
             }
         }
+        .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .presentationBackground(backgroundTan)
     }
 
     // MARK: - Rule Card
@@ -1150,7 +1226,7 @@ private struct BattleHowToPlayView: View {
 
         HStack(
             alignment: .top,
-            spacing: 11
+            spacing: 12
         ) {
 
             Text(number)
@@ -1162,21 +1238,17 @@ private struct BattleHowToPlayView: View {
                     )
                 )
                 .frame(
-                    width: 27,
+                    width: 28,
                     alignment: .leading
                 )
 
             Rectangle()
-                .fill(
-                    outline.opacity(0.7)
-                )
+                .fill(outline.opacity(0.7))
                 .frame(width: 1)
 
             Text(text)
                 .font(
-                    .system(
-                        size: compact ? 13 : 15
-                    )
+                    .system(size: compact ? 13 : 15)
                 )
                 .fixedSize(
                     horizontal: false,
@@ -1188,27 +1260,21 @@ private struct BattleHowToPlayView: View {
                 )
         }
         .foregroundStyle(brown)
-        .padding(
-            compact ? 10 : 15
-        )
+        .padding(compact ? 10 : 15)
         .frame(
             maxWidth: .infinity,
             alignment: .leading
         )
         .background(
             paper,
-            in: RoundedRectangle(
-                cornerRadius: 14
-            )
+            in: RoundedRectangle(cornerRadius: 14)
         )
         .overlay {
-            RoundedRectangle(
-                cornerRadius: 14
-            )
-            .stroke(
-                outline.opacity(0.55),
-                lineWidth: 1
-            )
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(
+                    outline.opacity(0.55),
+                    lineWidth: 1
+                )
         }
     }
 }
@@ -1216,9 +1282,20 @@ private struct BattleHowToPlayView: View {
 // MARK: - Game Over Overlay
 
 struct GameOverOverlayView: View {
-
     let didWin: Bool
     let onContinue: () -> Void
+
+    private let backgroundTan = Color(
+        red: 252.0 / 255,
+        green: 220.0 / 255,
+        blue: 187.0 / 255
+    )
+
+    private let paper = Color(
+        red: 1,
+        green: 243.0 / 255,
+        blue: 228.0 / 255
+    )
 
     private let darkBrown = Color(
         red: 0.35,
@@ -1226,76 +1303,84 @@ struct GameOverOverlayView: View {
         blue: 0.18
     )
 
-    private let cardTan = Color(
-        red: 0.98,
-        green: 0.88,
-        blue: 0.74
-    )
-
     var body: some View {
-
         GeometryReader { geometry in
-
-            let compact =
-                geometry.size.height < 410
+            let compact = geometry.size.height < 410
 
             ZStack {
-
                 Color.black.opacity(0.6)
                     .ignoresSafeArea()
 
-                ScrollView(
-                    .vertical,
-                    showsIndicators: false
-                ) {
+                VStack(spacing: compact ? 10 : 16) {
+                    if didWin {
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: compact ? 34 : 46))
+                            .foregroundStyle(Color.orange)
+                    } else {
+                        Image("ghost")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: compact ? 48 : 68)
+                    }
 
-                    VStack(
-                        spacing: compact ? 12 : 20
-                    ) {
-
-                        Text(
-                            didWin
-                                ? "YOU WIN!"
-                                : "YOU LOST!"
-                        )
+                    Text(didWin ? "Victory!" : "Defeat!")
                         .font(
                             .system(
-                                size: compact ? 29 : 38,
+                                size: compact ? 28 : 36,
                                 weight: .black,
                                 design: .serif
                             )
                         )
-                        .foregroundStyle(
-                            didWin
-                                ? Color(
-                                    red: 0.15,
-                                    green: 0.40,
-                                    blue: 0.19
-                                )
-                                : Color(
-                                    red: 0.65,
-                                    green: 0.16,
-                                    blue: 0.13
-                                )
+                        .foregroundStyle(didWin ? Color.green : Color.red)
+
+                    Text(
+                        didWin
+                            ? "Bonk has been defeated! Somehow, you kept the idiots alive."
+                            : "Too many idiots became ghosts. Better luck keeping them out of trouble next time!"
+                    )
+                    .font(
+                        .system(
+                            size: compact ? 13 : 15,
+                            weight: .medium,
+                            design: .serif
                         )
+                    )
+                    .foregroundStyle(darkBrown)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 8)
 
-                        Text(
-                            didWin
-                                ? "Bonk has been defeated!"
-                                : "Two idiots became ghosts!"
-                        )
-                        .font(.headline)
-                        .foregroundStyle(darkBrown)
-                        .multilineTextAlignment(.center)
+                    VStack(spacing: compact ? 8 : 12) {
+                        Button(action: onPlayAgain) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.counterclockwise")
+                                Text("Play Again")
+                            }
+                            .font(.headline.bold())
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: compact ? 42 : 48)
+                            .background(Color.green, in: Capsule())
+                            .overlay {
+                                Capsule()
+                                    .stroke(darkBrown, lineWidth: 1.5)
+                            }
+                        }
+                        .buttonStyle(.plain)
 
-                        Button(action: onContinue) {
-
-                            HStack(spacing: 10) {
-                                Text("Continue")
-
-                                Image(
-                                    systemName: "arrow.right"
-                                )
+                        Button(action: onReturnHome) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "house.fill")
+                                Text("Return Home")
+                            }
+                            .font(.headline.bold())
+                            .foregroundStyle(darkBrown)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: compact ? 40 : 46)
+                            .background(backgroundTan, in: Capsule())
+                            .overlay {
+                                Capsule()
+                                    .stroke(darkBrown, lineWidth: 1.5)
                             }
                             .font(.headline.bold())
                             .foregroundStyle(.white)
@@ -1313,45 +1398,26 @@ struct GameOverOverlayView: View {
                             "Continue to battle setup"
                         )
                     }
-                    .padding(
-                        compact ? 18 : 28
-                    )
-                    .frame(maxWidth: 430)
-                    .background(
-                        cardTan,
-                        in: RoundedRectangle(
-                            cornerRadius: 20
-                        )
-                    )
-                    .overlay {
-                        RoundedRectangle(
-                            cornerRadius: 20
-                        )
-                        .stroke(
-                            darkBrown,
-                            lineWidth: 2
-                        )
-                    }
-                    .shadow(radius: 15)
-                    .padding(12)
-                    .frame(
-                        maxWidth: .infinity
-                    )
+                    .padding(.top, 4)
                 }
-                .frame(
-                    maxHeight: geometry.size.height
+                .padding(compact ? 18 : 26)
+                .frame(maxWidth: 400)
+                .background(
+                    paper,
+                    in: RoundedRectangle(cornerRadius: 22)
                 )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22)
+                        .stroke(darkBrown, lineWidth: 2)
+                }
+                .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
+                .padding(16)
             }
         }
     }
 }
 
-// MARK: - Preview
-
 #Preview {
-    NavigationStack {
-        GameBoardView()
-            .environmentObject(GameManager())
-    }
+    GameBoardView()
+        .environmentObject(GameManager())
 }
-

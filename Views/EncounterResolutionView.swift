@@ -108,25 +108,26 @@ struct EncounterResolutionView: View {
                 }
                 .frame(maxWidth: .infinity)
                 
-                // CENTER: 3D flipping reveal cards
-                HStack(spacing: 12) {
-                    FlippableRevealCard(
-                        header: "Their move",
-                        title: activeTeammate.chosenMove?.title ?? "???",
-                        subtitle: activeTeammate.chosenMove?.description ?? "",
-                        accentColor: Color.orange.opacity(0.25),
-                        isFlipped: game.cardsFlipped
-                    )
-                    
-                    FlippableRevealCard(
-                        header: "Your response",
-                        title: activeTeammate.assignedCard?.rawValue ?? "Do Nothing",
-                        subtitle: "",
-                        accentColor: Color.purple.opacity(0.2),
-                        isFlipped: game.cardsFlipped,
-                        imageName: (activeTeammate.assignedCard ?? .doNothing).imageName
-                    )
-                }
+                // CENTER: 3D Flipping Reveal Cards
+                                HStack(spacing: 12) {
+                                    FlippableRevealCard(
+                                        header: "Their move",
+                                        title: activeTeammate.chosenMove?.title ?? "???",
+                                        subtitle: activeTeammate.chosenMove?.description ?? "",
+                                        accentColor: Color.orange.opacity(0.25),
+                                        isFlipped: game.cardsFlipped,
+                                        idiotCard: activeTeammate.chosenMove
+                                    )
+                                    
+                                    FlippableRevealCard(
+                                        header: "Your response",
+                                        title: activeTeammate.assignedCard?.rawValue ?? "Do Nothing",
+                                        subtitle: "",
+                                        accentColor: Color.purple.opacity(0.2),
+                                        isFlipped: game.cardsFlipped,
+                                        imageName: (activeTeammate.assignedCard ?? .doNothing).imageName
+                                    )
+                                }
                 
                 // RIGHT: BONK
                 ZStack {
@@ -234,6 +235,7 @@ struct FlippableRevealCard: View {
     let accentColor: Color
     let isFlipped: Bool
     var imageName: String? = nil
+    var idiotCard: IdiotCard? = nil
     
     let darkBrown = Color(red: 0.35, green: 0.23, blue: 0.18)
     
@@ -245,39 +247,21 @@ struct FlippableRevealCard: View {
             
             ZStack {
                 if isFlipped {
-                    if let imageName = imageName {
+                    if let idiotCard = idiotCard {
+                        IdiotMoveCardView(card: idiotCard)
+                            .frame(height: 165)
+                            .shadow(color: .black.opacity(0.2), radius: 3, y: 2)
+                    } else if let imageName = imageName {
                         Image(imageName)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 125, height: 155)
+                            .frame(height: 165)
                             .shadow(color: .black.opacity(0.2), radius: 3, y: 2)
-                    } else {
-                        VStack(spacing: 6) {
-                            Text(title)
-                                .font(.system(size: 14, weight: .black, design: .serif))
-                                .foregroundColor(darkBrown)
-                                .multilineTextAlignment(.center)
-                                .minimumScaleFactor(0.7)
-                            
-                            Divider()
-                            
-                            Text(subtitle)
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(darkBrown)
-                                .multilineTextAlignment(.center)
-                                .minimumScaleFactor(0.7)
-                        }
-                        .padding(10)
-                        .frame(width: 125, height: 155)
-                        .background(Color.white)
-                        .overlay(RoundedRectangle(cornerRadius: 12).fill(accentColor))
-                        .cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(darkBrown, lineWidth: 2))
                     }
                 } else {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(red: 0.55, green: 0.42, blue: 0.35))
-                        .frame(width: 125, height: 155)
+                        .frame(width: 125, height: 165)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.white.opacity(0.6), lineWidth: 2)

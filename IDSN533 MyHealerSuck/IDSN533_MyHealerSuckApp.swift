@@ -21,7 +21,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions:
             [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-
         if FirebaseApp.app() == nil {
             FirebaseApp.configure()
         }
@@ -30,48 +29,25 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 }
 
-// MARK: - Game Navigation
-
-// Resets the navigation stack to the game's HomeView.
-// This allows Return Home to work from different entry paths.
-
-final class GameNavigation: ObservableObject {
-
-    @Published private(set) var homeResetID = UUID()
-
-    func returnToGameHome() {
-        homeResetID = UUID()
-    }
-}
-
 // MARK: - Main App
 
 @main
 struct MyHealerSucksApp: App {
 
-    // MARK: - App Delegate
+    @Environment(\.scenePhase)
+    private var scenePhase
 
     @UIApplicationDelegateAdaptor(AppDelegate.self)
     private var delegate
 
-    // MARK: - Shared Game State
-
     @StateObject private var game = GameManager()
-
-    // MARK: - Navigation State
-
-    @StateObject private var navigation = GameNavigation()
-
-    // MARK: - Authentication State
 
     @StateObject private var authManager: AuthManager
 
     // MARK: - Initialization
 
     init() {
-
-        // Configure Firebase before initializing AuthManager.
-
+        // Configure Firebase before creating AuthManager.
         if FirebaseApp.app() == nil {
             FirebaseApp.configure()
         }
@@ -99,10 +75,14 @@ struct MyHealerSucksApp: App {
 
             // Shared authentication state
             .environmentObject(authManager)
-
-            // Shared navigation state
-            .environmentObject(navigation)
+            .onChange(
+                of: scenePhase,
+                initial: true
+            ) { _, phase in
+                AudioManager.shared.setApplicationActive(
+                    phase == .active
+                )
+            }
         }
     }
 }
-

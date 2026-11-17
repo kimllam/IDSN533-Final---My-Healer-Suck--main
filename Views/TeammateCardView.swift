@@ -1,4 +1,3 @@
-
 //
 //  TeammateCardView.swift
 //  IDSN533 MyHealerSuck
@@ -47,52 +46,56 @@ struct TeammateCardView: View {
                 } else {
 
                     // MARK: - Move Options
-                    // The descriptions remain scrollable
-                    // instead of shrinking to unreadable text.
+                    // Illustrated cards scale to fit the available space
+                    // while keeping the bottom description crisp.
 
-                    VStack(spacing: 5) {
-                        Text("Possible moves")
-                            .font(
-                                .system(
-                                    size: 12,
-                                    weight: .bold,
-                                    design: .serif
-                                )
-                            )
-                            .foregroundStyle(darkBrownText)
+                                        VStack(spacing: 4) {
+                                            HStack(spacing: 4) {
+                                                Text("Possible moves")
+                                                    .font(
+                                                        .system(
+                                                            size: 12,
+                                                            weight: .bold,
+                                                            design: .serif
+                                                        )
+                                                    )
 
-                        ScrollView(
-                            .vertical,
-                            showsIndicators: false
-                        ) {
-                            HStack(
-                                alignment: .top,
-                                spacing: 7
-                            ) {
-                                MoveOptionBoxView(
-                                    card: teammate.optionA,
-                                    textColor: darkBrownText,
-                                    borderColor: mediumBrown,
-                                    compact: narrow
-                                )
+                                                Image(systemName: "magnifyingglass")
+                                                    .font(.system(size: 10, weight: .bold))
+                                            }
+                                            .foregroundStyle(darkBrownText)
 
-                                MoveOptionBoxView(
-                                    card: teammate.optionB,
-                                    textColor: darkBrownText,
-                                    borderColor: mediumBrown,
-                                    compact: narrow
-                                )
-                            }
-                            .frame(
-                                maxWidth: .infinity,
-                                alignment: .top
-                            )
-                        }
-                    }
-                    .frame(
-                        maxWidth: .infinity,
-                        maxHeight: .infinity
-                    )
+                                            HStack(
+                                                alignment: .center,
+                                                spacing: 7
+                                            ) {
+                                                IdiotMoveCardView(
+                                                    card: teammate.optionA,
+                                                    textColor: darkBrownText,
+                                                    borderColor: mediumBrown
+                                                )
+
+                                                IdiotMoveCardView(
+                                                    card: teammate.optionB,
+                                                    textColor: darkBrownText,
+                                                    borderColor: mediumBrown
+                                                )
+                                            }
+                                            .frame(
+                                                maxWidth: .infinity,
+                                                maxHeight: .infinity
+                                            )
+                                            .contentShape(Rectangle())
+                                            .onTapGesture {
+                                                withAnimation(.easeOut(duration: 0.2)) {
+                                                    game.inspectedTeammate = teammate
+                                                }
+                                            }
+                                        }
+                                        .frame(
+                                            maxWidth: .infinity,
+                                            maxHeight: .infinity
+                                        )
 
                     // MARK: - Drop Target
                     // Keep the visible target large
@@ -349,77 +352,66 @@ struct TeammateCardView: View {
     }
 }
 
-// MARK: - Move Option Box
-// Created by Kim Lam.
-// Updated by Jingyi: Readable adaptive move information.
+// MARK: - Illustrated Idiot Move Card View
+// Renders the character's card PNG and overlays the move description
+// inside the blank bottom parchment box.
 
-struct MoveOptionBoxView: View {
+struct IdiotMoveCardView: View {
 
     let card: IdiotCard?
-    let textColor: Color
-    let borderColor: Color
-
-    var compact: Bool = false
+    var textColor: Color = Color(red: 0.35, green: 0.23, blue: 0.18)
+    var borderColor: Color = Color(red: 0.65, green: 0.5, blue: 0.4)
 
     var body: some View {
-        VStack(spacing: 5) {
+        Group {
             if let card = card {
-
-                Text(card.title)
-                    .font(
-                        .system(
-                            size: compact ? 11 : 12,
-                            weight: .bold,
-                            design: .serif
-                        )
-                    )
-                    .foregroundStyle(textColor)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(
-                        horizontal: false,
-                        vertical: true
-                    )
-
-                Divider()
-                    .overlay(borderColor.opacity(0.3))
-
-                Text(card.description)
-                    .font(
-                        .system(
-                            size: compact ? 10 : 11
-                        )
-                    )
-                    .foregroundStyle(textColor)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(
-                        horizontal: false,
-                        vertical: true
-                    )
-
+                Image(card.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .overlay {
+                        GeometryReader { geo in
+                            Text(card.description)
+                                .font(
+                                    .system(
+                                        size: max(6.5, geo.size.height * 0.068),
+                                        weight: .bold,
+                                        design: .serif
+                                    )
+                                )
+                                .foregroundStyle(textColor)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(3)
+                                .minimumScaleFactor(0.5)
+                                .frame(
+                                    width: geo.size.width * 0.74,
+                                    height: geo.size.height * 0.22
+                                )
+                                .position(
+                                    x: geo.size.width * 0.5,
+                                    y: geo.size.height * 0.815
+                                )
+                        }
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(card.title): \(card.description)")
             } else {
-                Text("Empty")
-                    .font(.system(size: 12))
-                    .foregroundStyle(textColor.opacity(0.85))
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(Color.white.opacity(0.2))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(borderColor, lineWidth: 1)
+                    }
+                    .overlay {
+                        Text("Empty")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.gray)
+                    }
             }
         }
-        .padding(6)
         .frame(
             maxWidth: .infinity,
-            alignment: .top
+            maxHeight: .infinity
         )
-        .background(
-            Color.white.opacity(0.2),
-            in: RoundedRectangle(
-                cornerRadius: 7
-            )
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 7)
-                .stroke(
-                    borderColor,
-                    lineWidth: 1
-                )
-        }
     }
 }
 
@@ -433,4 +425,3 @@ struct MoveOptionBoxView: View {
     .environmentObject(GameManager())
     .frame(width: 225, height: 310)
 }
-
