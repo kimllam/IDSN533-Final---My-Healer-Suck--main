@@ -27,9 +27,9 @@ struct TeammateCardView: View {
     )
 
     private let mediumBrown = Color(
-        red: 0.65,
-        green: 0.5,
-        blue: 0.4
+        red: 0.42,
+        green: 0.30,
+        blue: 0.24
     )
 
     var body: some View {
@@ -399,7 +399,7 @@ struct MoveOptionBoxView: View {
             } else {
                 Text("Empty")
                     .font(.system(size: 12))
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(textColor.opacity(0.85))
             }
         }
         .padding(6)

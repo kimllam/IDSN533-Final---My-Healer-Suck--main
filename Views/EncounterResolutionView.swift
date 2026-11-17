@@ -1,3 +1,4 @@
+
 //
 //  EncounterResolutionView.swift
 //  IDSN533 MyHealerSuck
@@ -184,6 +185,8 @@ struct EncounterResolutionView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 10)
         }
+        .foregroundStyle(darkBrown)
+        .environment(\.colorScheme, .light)
     }
 }
 
@@ -300,3 +303,4 @@ struct FlippableRevealCard: View {
         .environmentObject(GameManager())
         .background(Color(red: 252 / 255, green: 220 / 255, blue: 187 / 255))
 }
+
