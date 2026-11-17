@@ -26,9 +26,9 @@ struct TeammateCardView: View {
     )
 
     private let mediumBrown = Color(
-        red: 0.65,
-        green: 0.5,
-        blue: 0.4
+        red: 0.42,
+        green: 0.30,
+        blue: 0.24
     )
 
     var body: some View {

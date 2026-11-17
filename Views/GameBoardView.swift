@@ -2,9 +2,7 @@
 //  GameBoardView.swift
 //  IDSN533 MyHealerSuck
 //
-//  Created by Kim Lam on 11/11/26.
-//  Updated by Jingyi: Responsive battle layout and larger card targets.
-//  Updated by Jingyi: Bonk HP inside the original image sign.
+//  Updated: Battle readability and Continue behavior.
 //
 
 import SwiftUI
@@ -15,17 +13,11 @@ struct GameBoardView: View {
     @EnvironmentObject var game: GameManager
     @Environment(\.dismiss) private var dismiss
 
-    // MARK: - Profile
-    // Added by Jingyi.
-
     @AppStorage("playerAvatarChoice")
     private var avatarChoice = "healer card"
 
     @State private var customAvatar: UIImage?
     @State private var showProfile = false
-
-    // MARK: - Pause Menu
-    // Added by Jingyi.
 
     @State private var isPaused = false
     @State private var showSettings = false
@@ -75,9 +67,6 @@ struct GameBoardView: View {
 
                 VStack(spacing: 0) {
 
-                    // MARK: - Shared Header
-                    // Keep the controls inside the safe area.
-
                     if !game.isGameOver {
                         topBar(compact: compact)
                     }
@@ -113,18 +102,13 @@ struct GameBoardView: View {
                 )
 
                 // MARK: - Game Over
+                // Continue resets the battle in place.
 
                 if game.isGameOver {
                     GameOverOverlayView(
                         didWin: game.didPlayerWin,
-                        onPlayAgain: {
-                            isPaused = false
-                            game.resetGame()
-                        },
-                        onReturnHome: {
-                            isPaused = false
-                            game.resetGame()
-                            dismiss()
+                        onContinue: {
+                            restartBattle()
                         }
                     )
                     .zIndex(10)
@@ -152,6 +136,8 @@ struct GameBoardView: View {
                 }
             }
         }
+        .foregroundStyle(darkBrown)
+        .environment(\.colorScheme, .light)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
 
@@ -178,7 +164,7 @@ struct GameBoardView: View {
             BattleHowToPlayView()
         }
 
-        // MARK: - Return Confirmation
+        // MARK: - Pause Exit Confirmation
 
         .confirmationDialog(
             "Leave the current game?",
@@ -189,9 +175,7 @@ struct GameBoardView: View {
                 "Return Home",
                 role: .destructive
             ) {
-                isPaused = false
-                game.resetGame()
-                dismiss()
+                exitBattle()
             }
 
             Button(
@@ -204,8 +188,6 @@ struct GameBoardView: View {
                 "Your current battle progress will be lost."
             )
         }
-
-        // MARK: - Lifecycle
 
         .onAppear {
             loadAvatar()
@@ -222,9 +204,29 @@ struct GameBoardView: View {
         }
     }
 
+    // MARK: - Continue After Game Over
+
+    // Reset the existing GameBoardView.
+    // Do not dismiss or reset the NavigationStack.
+
+    private func restartBattle() {
+        isPaused = false
+        confirmReturnHome = false
+
+        game.resetGame()
+    }
+
+    // MARK: - Pause Menu Exit
+
+    // This is separate from the end-of-game Continue action.
+
+    private func exitBattle() {
+        isPaused = false
+        game.resetGame()
+        dismiss()
+    }
+
     // MARK: - Top Bar
-    // Updated by Jingyi:
-    // The same header is used in portrait and landscape.
 
     private func topBar(
         compact: Bool
@@ -304,8 +306,6 @@ struct GameBoardView: View {
     }
 
     // MARK: - Portrait Battle
-    // Updated by Jingyi:
-    // Large teammate cards, Bonk, and healer hand.
 
     private func portraitBattleBoard(
         size: CGSize
@@ -334,15 +334,11 @@ struct GameBoardView: View {
 
         return VStack(spacing: 10) {
 
-            // MARK: - Teammate Cards
-
             teammatePanel
                 .frame(
                     maxWidth: .infinity,
                     maxHeight: .infinity
                 )
-
-            // MARK: - Bonk and Action
 
             HStack(spacing: 12) {
 
@@ -364,8 +360,6 @@ struct GameBoardView: View {
             }
             .frame(height: bossHeight)
 
-            // MARK: - Healer Cards
-
             healerHand(
                 height: handHeight,
                 availableWidth: size.width - 24
@@ -377,8 +371,6 @@ struct GameBoardView: View {
     }
 
     // MARK: - Landscape Battle
-    // Updated by Jingyi:
-    // Allocate more width to teammate cards.
 
     private func landscapeBattleBoard(
         size: CGSize,
@@ -420,8 +412,6 @@ struct GameBoardView: View {
 
         return HStack(spacing: gap) {
 
-            // MARK: - Left Team Section
-
             VStack(spacing: 7) {
 
                 teammatePanel
@@ -438,13 +428,7 @@ struct GameBoardView: View {
             }
             .frame(width: teammateWidth)
 
-            // MARK: - Right Boss Section
-
             VStack(spacing: 8) {
-
-                // MARK: - Bonk with HP
-                // HP is rendered on the image,
-                // not as a separate label above it.
 
                 bonkWithHP
                     .frame(
@@ -463,9 +447,6 @@ struct GameBoardView: View {
     }
 
     // MARK: - Bonk HP Display
-    // Added by Jingyi:
-    // Position HP over the original rectangular sign.
-    // Use the same component for both orientations.
 
     private var bonkWithHP: some View {
         GeometryReader { geometry in
@@ -487,9 +468,6 @@ struct GameBoardView: View {
                         maxWidth: .infinity,
                         maxHeight: .infinity
                     )
-
-                // MARK: - HP Label
-                // The offset follows the displayed image size.
 
                 Text(
                     "\(max(0, game.bonkHP)) / 5 HP"
@@ -523,10 +501,7 @@ struct GameBoardView: View {
         )
     }
 
-    // MARK: - Responsive Teammate Panel
-    // Updated by Jingyi:
-    // Preserve readable card widths.
-    // Enable scrolling when three cards cannot fit.
+    // MARK: - Teammate Panel
 
     private var teammatePanel: some View {
         GeometryReader { region in
@@ -610,8 +585,6 @@ struct GameBoardView: View {
     }
 
     // MARK: - Healer Hand
-    // Updated by Jingyi:
-    // Larger cards and a stable return-to-hand target.
 
     private func healerHand(
         height: CGFloat,
@@ -698,7 +671,6 @@ struct GameBoardView: View {
     }
 
     // MARK: - Begin Encounter
-    // Original game action retained.
 
     private func beginEncounterButton(
         compact: Bool
@@ -749,8 +721,6 @@ struct GameBoardView: View {
     }
 
     // MARK: - Pause Menu
-    // Added by Jingyi:
-    // Scrollable on shorter landscape displays.
 
     private func pauseOverlay(
         compact: Bool
@@ -1083,7 +1053,6 @@ struct MoveInspectOverlayView: View {
 }
 
 // MARK: - How to Play
-// Added by Jingyi: Responsive instruction sheet.
 
 private struct BattleHowToPlayView: View {
 
@@ -1314,8 +1283,7 @@ private struct BattleHowToPlayView: View {
 
 struct GameOverOverlayView: View {
     let didWin: Bool
-    let onPlayAgain: () -> Void
-    let onReturnHome: () -> Void
+    let onContinue: () -> Void
 
     private let backgroundTan = Color(
         red: 252.0 / 255,
@@ -1414,8 +1382,21 @@ struct GameOverOverlayView: View {
                                 Capsule()
                                     .stroke(darkBrown, lineWidth: 1.5)
                             }
+                            .font(.headline.bold())
+                            .foregroundStyle(.white)
+                            .frame(
+                                maxWidth: .infinity
+                            )
+                            .frame(height: 48)
+                            .background(
+                                darkBrown,
+                                in: Capsule()
+                            )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(
+                            "Continue to battle setup"
+                        )
                     }
                     .padding(.top, 4)
                 }

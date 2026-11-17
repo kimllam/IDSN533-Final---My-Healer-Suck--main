@@ -4,11 +4,13 @@
 //  IDSN533 MyHealerSuck
 //
 //  Created by Kim Lam on 11/11/26.
-//  Updated by Jingyi: Firebase authentication integration.
+//  Updated by Jingyi: Firebase authentication and navigation.
 //
 
 import SwiftUI
+import Combine
 import FirebaseCore
+import UIKit
 
 // MARK: - Firebase App Delegate
 
@@ -42,6 +44,8 @@ struct MyHealerSucksApp: App {
 
     @StateObject private var authManager: AuthManager
 
+    // MARK: - Initialization
+
     init() {
         // Configure Firebase before creating AuthManager.
         if FirebaseApp.app() == nil {
@@ -53,12 +57,23 @@ struct MyHealerSucksApp: App {
         )
     }
 
+    // MARK: - Main Window
+
     var body: some Scene {
+
         WindowGroup {
+
             NavigationStack {
+
                 HomeView()
+
             }
+            .id(navigation.homeResetID)
+
+            // Shared game state
             .environmentObject(game)
+
+            // Shared authentication state
             .environmentObject(authManager)
             .onChange(
                 of: scenePhase,
