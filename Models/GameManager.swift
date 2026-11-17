@@ -12,6 +12,8 @@ internal import GameplayKit
 @MainActor
 class GameManager: ObservableObject {
 
+    @Published var inspectedTeammate: Teammate? = nil
+    
     @Published var teammates: [Teammate] = [
         Teammate(character: .vampireAssassin, hp: 3),
         Teammate(character: .knight, hp: 3),
@@ -162,6 +164,8 @@ class GameManager: ObservableObject {
         }
 
         presentAndResolveTeammate(at: firstLivingIndex)
+        
+        inspectedTeammate = nil
     }
 
     func advanceResolutionStep() {
@@ -596,5 +600,6 @@ class GameManager: ObservableObject {
                 .doNothing
             ]
         }
+        inspectedTeammate = nil
     }
 }
