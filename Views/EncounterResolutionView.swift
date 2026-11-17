@@ -242,8 +242,12 @@ struct FlippableRevealCard: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(header)
-                .font(.system(size: 12, weight: .bold, design: .serif))
-                .foregroundColor(darkBrown)
+                            .font(.system(size: 12, weight: .bold, design: .serif))
+                            .foregroundColor(darkBrown)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 3)
+                            .background(Color(red: 0.98, green: 0.88, blue: 0.74).opacity(0.92), in: Capsule())
+                            .overlay(Capsule().stroke(darkBrown, lineWidth: 1))
             
             ZStack {
                 if isFlipped {
@@ -285,6 +289,11 @@ struct FlippableRevealCard: View {
 #Preview {
     EncounterResolutionView()
         .environmentObject(GameManager())
-        .background(Color(red: 252 / 255, green: 220 / 255, blue: 187 / 255))
+        .background {
+            Image("gameboardbg")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+        }
 }
 

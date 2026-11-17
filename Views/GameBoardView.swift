@@ -73,88 +73,95 @@ struct GameBoardView: View {
 
             ZStack {
 
-                backgroundTan
-                    .ignoresSafeArea()
+                            VStack(spacing: 0) {
 
-                VStack(spacing: 0) {
+                                // MARK: - Shared Header
 
-                    // MARK: - Shared Header
+                                if !game.isGameOver {
+                                    topBar(compact: compact)
+                                }
 
-                    if !game.isGameOver {
-                        topBar(compact: compact)
-                    }
+                                // MARK: - Battle Content
 
-                    // MARK: - Battle Content
+                                if game.isResolving {
 
-                    if game.isResolving {
+                                    EncounterResolutionView()
+                                        .frame(
+                                            maxWidth: .infinity,
+                                            maxHeight: .infinity
+                                        )
+                                        .allowsHitTesting(!isPaused)
 
-                        EncounterResolutionView()
+                                } else if portrait {
+
+                                    portraitBattleBoard(
+                                        size: geometry.size
+                                    )
+                                    .allowsHitTesting(!isPaused)
+
+                                } else {
+
+                                    landscapeBattleBoard(
+                                        size: geometry.size,
+                                        compact: compact
+                                    )
+                                    .allowsHitTesting(!isPaused)
+                                }
+                            }
                             .frame(
                                 maxWidth: .infinity,
                                 maxHeight: .infinity
                             )
-                            .allowsHitTesting(!isPaused)
 
-                    } else if portrait {
+                            // MARK: - Game Over
 
-                        portraitBattleBoard(
-                            size: geometry.size
-                        )
-                        .allowsHitTesting(!isPaused)
+                            if game.isGameOver {
+                                GameOverOverlayView(
+                                    didWin: game.didPlayerWin,
+                                    onContinue: {
+                                        restartBattle()
+                                    }
+                                )
+                                .zIndex(10)
+                            }
 
-                    } else {
+                            // MARK: - Move Inspect Overlay
 
-                        landscapeBattleBoard(
-                            size: geometry.size,
-                            compact: compact
-                        )
-                        .allowsHitTesting(!isPaused)
-                    }
-                }
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity
-                )
+                            if let teammate = game.inspectedTeammate,
+                               !game.isResolving,
+                               !game.isGameOver {
 
-                // MARK: - Game Over
-                // Continue resets the current battle in place.
+                                MoveInspectOverlayView(
+                                    teammate: teammate
+                                ) {
+                                    withAnimation(
+                                        .easeOut(duration: 0.2)
+                                    ) {
+                                        game.inspectedTeammate = nil
+                                    }
+                                }
+                                .zIndex(15)
+                                .transition(.opacity)
+                            }
 
-                if game.isGameOver {
-                    GameOverOverlayView(
-                        didWin: game.didPlayerWin,
-                        onContinue: {
-                            restartBattle()
+                            // MARK: - Pause Overlay
+
+                            if isPaused && !game.isGameOver {
+                                pauseOverlay(compact: compact)
+                                    .zIndex(20)
+                            }
                         }
-                    )
-                    .zIndex(10)
-                }
+                        .background {
+                            ZStack {
+                                backgroundTan
 
-                // MARK: - Move Inspect Overlay
-
-                if let teammate = game.inspectedTeammate,
-                   !game.isResolving,
-                   !game.isGameOver {
-
-                    MoveInspectOverlayView(
-                        teammate: teammate
-                    ) {
-                        withAnimation(
-                            .easeOut(duration: 0.2)
-                        ) {
-                            game.inspectedTeammate = nil
+                                Image("gameboardbg")
+                                    .resizable()
+                                    .scaledToFill()
+                            }
+                            .ignoresSafeArea()
+                            .allowsHitTesting(false)
                         }
-                    }
-                    .zIndex(15)
-                    .transition(.opacity)
-                }
-
-                // MARK: - Pause Overlay
-
-                if isPaused && !game.isGameOver {
-                    pauseOverlay(compact: compact)
-                        .zIndex(20)
-                }
-            }
         }
         .foregroundStyle(darkBrown)
         .environment(\.colorScheme, .light)
@@ -252,200 +259,123 @@ struct GameBoardView: View {
 
     // MARK: - Top Bar
 
-    private func topBar(
-        compact: Bool
-    ) -> some View {
+        private func topBar(
+            compact: Bool
+        ) -> some View {
 
-        HStack(spacing: 10) {
+            HStack(spacing: 10) {
 
-            Text(
-                game.isResolving
-                    ? "Encounter"
-                    : "Assign Your Healer Cards"
-            )
-            .font(
-                .system(
-                    size: compact ? 14 : 17,
-                    weight: .bold,
-                    design: .rounded
+                Text(
+                    game.isResolving
+                        ? "Encounter"
+                        : "Assign Your Healer Cards"
                 )
-            )
-            .foregroundStyle(darkBrown)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-
-            Spacer(minLength: 4)
-
-            // MARK: - Player Profile
-
-            Button {
-                loadAvatar()
-                showProfile = true
-            } label: {
-                playerAvatarButton
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Player Profile")
-
-            // MARK: - Pause Button
-
-            Button {
-                withAnimation(
-                    .easeInOut(duration: 0.2)
-                ) {
-                    isPaused = true
+                .font(
+                    .system(
+                        size: compact ? 14 : 17,
+                        weight: .bold,
+                        design: .rounded
+                    )
+                )
+                .foregroundStyle(darkBrown)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(
+                    lightTan.opacity(0.92),
+                    in: Capsule()
+                )
+                .overlay {
+                    Capsule()
+                        .stroke(darkBrown, lineWidth: 1.5)
                 }
-            } label: {
 
-                Image(systemName: "pause.fill")
-                    .font(
-                        .system(
-                            size: 17,
-                            weight: .bold
-                        )
-                    )
-                    .foregroundStyle(darkBrown)
-                    .frame(
-                        width: 44,
-                        height: 44
-                    )
-                    .background(
-                        lightTan,
-                        in: Circle()
-                    )
-                    .overlay {
-                        Circle()
-                            .stroke(
-                                darkBrown,
-                                lineWidth: 1.5
-                            )
+                Spacer(minLength: 4)
+
+                // MARK: - Player Profile
+
+                Button {
+                    loadAvatar()
+                    showProfile = true
+                } label: {
+                    playerAvatarButton
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Player Profile")
+
+                // MARK: - Pause Button
+
+                Button {
+                    withAnimation(
+                        .easeInOut(duration: 0.2)
+                    ) {
+                        isPaused = true
                     }
+                } label: {
+
+                    Image(systemName: "pause.fill")
+                        .font(
+                            .system(
+                                size: 17,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundStyle(darkBrown)
+                        .frame(
+                            width: 44,
+                            height: 44
+                        )
+                        .background(
+                            lightTan,
+                            in: Circle()
+                        )
+                        .overlay {
+                            Circle()
+                                .stroke(
+                                    darkBrown,
+                                    lineWidth: 1.5
+                                )
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Pause Game")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Pause Game")
+            .padding(.horizontal, 12)
+            .frame(height: 56)
+            .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, 12)
-        .frame(height: 56)
-        .frame(maxWidth: .infinity)
-        .background(backgroundTan)
-    }
 
     // MARK: - Portrait Battle
 
-    private func portraitBattleBoard(
-        size: CGSize
-    ) -> some View {
+        private func portraitBattleBoard(
+            size: CGSize
+        ) -> some View {
 
-        let availableHeight = max(
-            0,
-            size.height - 56
-        )
-
-        let bossHeight: CGFloat = min(
-            150,
-            max(
-                108,
-                availableHeight * 0.19
+            let availableHeight = max(
+                0,
+                size.height - 56
             )
-        )
 
-        let handHeight: CGFloat = min(
-            130,
-            max(
-                100,
-                availableHeight * 0.16
-            )
-        )
-
-        return VStack(spacing: 10) {
-
-            // MARK: - Teammate Cards
-
-            teammatePanel
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity
+            let bossHeight: CGFloat = min(
+                150,
+                max(
+                    108,
+                    availableHeight * 0.19
                 )
+            )
 
-            // MARK: - Bonk and Action
-
-            HStack(spacing: 12) {
-
-                bonkWithHP
-                    .frame(
-                        maxWidth: .infinity,
-                        maxHeight: .infinity
-                    )
-
-                beginEncounterButton(
-                    compact: false
+            let handHeight: CGFloat = min(
+                148,
+                max(
+                    114,
+                    availableHeight * 0.19
                 )
-                .frame(
-                    width: min(
-                        172,
-                        size.width * 0.44
-                    )
-                )
-            }
-            .frame(height: bossHeight)
-
-            // MARK: - Healer Cards
-
-            healerHand(
-                height: handHeight,
-                availableWidth: size.width - 24
             )
-            .frame(height: handHeight)
-        }
-        .padding(.horizontal, 12)
-        .padding(.bottom, 8)
-    }
 
-    // MARK: - Landscape Battle
+            return VStack(spacing: 10) {
 
-    private func landscapeBattleBoard(
-        size: CGSize,
-        compact: Bool
-    ) -> some View {
-
-        let gap: CGFloat = 10
-
-        let usableWidth = max(
-            0,
-            size.width - 24 - gap
-        )
-
-        let bossWidth = min(
-            210,
-            max(
-                135,
-                usableWidth * 0.22
-            )
-        )
-
-        let teammateWidth = max(
-            0,
-            usableWidth - bossWidth
-        )
-
-        let availableHeight = max(
-            0,
-            size.height - 56
-        )
-
-        let handHeight = min(
-            105,
-            max(
-                76,
-                availableHeight * 0.32
-            )
-        )
-
-        return HStack(spacing: gap) {
-
-            // MARK: - Left Team Section
-
-            VStack(spacing: 7) {
+                // MARK: - Teammate Cards
 
                 teammatePanel
                     .frame(
@@ -453,33 +383,119 @@ struct GameBoardView: View {
                         maxHeight: .infinity
                     )
 
+                // MARK: - Bonk and Action
+
+                HStack(spacing: 12) {
+
+                    bonkWithHP
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity
+                        )
+
+                    beginEncounterButton(
+                        compact: false
+                    )
+                    .frame(
+                        width: min(
+                            172,
+                            size.width * 0.44
+                        )
+                    )
+                }
+                .frame(height: bossHeight)
+
+                // MARK: - Healer Cards
+
                 healerHand(
                     height: handHeight,
-                    availableWidth: teammateWidth
+                    availableWidth: size.width - 24
                 )
                 .frame(height: handHeight)
             }
-            .frame(width: teammateWidth)
-
-            // MARK: - Right Boss Section
-
-            VStack(spacing: 8) {
-
-                bonkWithHP
-                    .frame(
-                        maxWidth: .infinity,
-                        maxHeight: .infinity
-                    )
-
-                beginEncounterButton(
-                    compact: compact
-                )
-            }
-            .frame(width: bossWidth)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
         }
-        .padding(.horizontal, 12)
-        .padding(.bottom, 8)
-    }
+
+        // MARK: - Landscape Battle
+
+        private func landscapeBattleBoard(
+            size: CGSize,
+            compact: Bool
+        ) -> some View {
+
+            let gap: CGFloat = 10
+
+            let usableWidth = max(
+                0,
+                size.width - 24 - gap
+            )
+
+            let bossWidth = min(
+                210,
+                max(
+                    135,
+                    usableWidth * 0.22
+                )
+            )
+
+            let teammateWidth = max(
+                0,
+                usableWidth - bossWidth
+            )
+
+            let availableHeight = max(
+                0,
+                size.height - 56
+            )
+
+            let handHeight = min(
+                128,
+                max(
+                    92,
+                    availableHeight * 0.36
+                )
+            )
+
+            return HStack(spacing: gap) {
+
+                // MARK: - Left Team Section
+
+                VStack(spacing: 7) {
+
+                    teammatePanel
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity
+                        )
+
+                    healerHand(
+                        height: handHeight,
+                        availableWidth: teammateWidth
+                    )
+                    .frame(height: handHeight)
+                }
+                .frame(width: teammateWidth)
+
+                // MARK: - Right Boss Section
+
+                VStack(spacing: 8) {
+
+                    bonkWithHP
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity
+                        )
+
+                    beginEncounterButton(
+                        compact: compact
+                    )
+                }
+                .frame(width: bossWidth)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
+        }
 
     // MARK: - Bonk HP Display
 
@@ -622,59 +638,77 @@ struct GameBoardView: View {
 
     // MARK: - Healer Hand
 
-    private func healerHand(
-        height: CGFloat,
-        availableWidth: CGFloat
-    ) -> some View {
+private func healerHand(
+            height: CGFloat,
+            availableWidth: CGFloat
+        ) -> some View {
 
-        let cardHeight = max(
-            64,
-            height - 8
-        )
-
-        let heroWidth = min(
-            85,
-            availableWidth * 0.16
-        )
-
-        return HStack(spacing: 8) {
-
-            Image("healer card")
-                .resizable()
-                .scaledToFit()
-                .frame(
-                    width: heroWidth,
-                    height: height
-                )
-
-            ScrollView(
-                .horizontal,
-                showsIndicators: false
-            ) {
-
-                HStack(spacing: 10) {
-
-                    ForEach(
-                        game.availableCards,
-                        id: \.self
-                    ) { card in
-
-                        Image(card.imageName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: cardHeight)
-                            .shadow(
-                                color: .black.opacity(0.2),
-                                radius: 4,
-                                y: 2
-                            )
-                            .draggable(card.rawValue)
-                            .accessibilityLabel(
-                                card.rawValue
-                            )
+            let cardHeight = max(
+                76,
+                height - 14
+            )
+            let sideFootprint = height * 0.55
+            return HStack(spacing: 8) {
+                
+                Image("healer card")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: height)
+                    .scaleEffect(1.2)
+                    .offset(x: 2, y: -4)
+                    .zIndex(2) //
+                    .allowsHitTesting(false)
+                
+                GeometryReader { scrollGeo in
+                    ScrollView(
+                        .horizontal,
+                        showsIndicators: false
+                    ) {
+                        
+                        HStack(spacing: 16) {
+                            
+                            ForEach(
+                                game.availableCards,
+                                id: \.self
+                            ) { card in
+                                
+                                Image(card.imageName)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: cardHeight)
+                                    .shadow(
+                                        color: .black.opacity(0.22),
+                                        radius: 4,
+                                        y: 2
+                                    )
+                                    .draggable(card.rawValue)
+                                    .accessibilityLabel(
+                                        card.rawValue
+                                    )
+                            }
+                        }
+                        .frame(
+                            minWidth: scrollGeo.size.width,
+                            minHeight: height,
+                            alignment: .center
+                        )
                     }
                 }
-                .frame(minHeight: height)
+                Color.clear
+                                .frame(width: sideFootprint, height: height)
+                                .allowsHitTesting(false)
+            }
+            .padding(.horizontal, 16)
+            .frame(
+                maxWidth: .infinity,
+                alignment: .leading
+            )
+            .frame(height: height)
+            .background {
+                Image("healertray")
+                    .resizable()
+                    .padding(.vertical, -height * 0.34)
+                    .allowsHitTesting(false)
             }
             .contentShape(Rectangle())
             .dropDestination(for: String.self) { items, _ in
@@ -695,12 +729,6 @@ struct GameBoardView: View {
                 return true
             }
         }
-        .frame(
-            maxWidth: .infinity,
-            alignment: .leading
-        )
-        .frame(height: height)
-    }
 
     // MARK: - Begin Encounter
 
