@@ -1,23 +1,33 @@
+
 //
 //  GameBoardView.swift
 //  IDSN533 MyHealerSuck
 //
-//  Updated: Battle readability and Continue behavior.
+//  Created by Kim Lam on 11/11/26.
+//  Updated by Jingyi: Responsive battle layout and larger card targets.
+//  Updated by Jingyi: Bonk HP inside the original image sign.
+//  Updated: Single Continue action and battle readability.
 //
 
 import SwiftUI
 import UIKit
+
+// MARK: - Game Board
 
 struct GameBoardView: View {
 
     @EnvironmentObject var game: GameManager
     @Environment(\.dismiss) private var dismiss
 
+    // MARK: - Profile
+
     @AppStorage("playerAvatarChoice")
     private var avatarChoice = "healer card"
 
     @State private var customAvatar: UIImage?
     @State private var showProfile = false
+
+    // MARK: - Pause Menu
 
     @State private var isPaused = false
     @State private var showSettings = false
@@ -45,7 +55,7 @@ struct GameBoardView: View {
     )
 
     private let paper = Color(
-        red: 1,
+        red: 1.0,
         green: 243.0 / 255,
         blue: 228.0 / 255
     )
@@ -62,14 +72,19 @@ struct GameBoardView: View {
                 geometry.size.height < 410
 
             ZStack {
+
                 backgroundTan
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
 
+                    // MARK: - Shared Header
+
                     if !game.isGameOver {
                         topBar(compact: compact)
                     }
+
+                    // MARK: - Battle Content
 
                     if game.isResolving {
 
@@ -102,7 +117,7 @@ struct GameBoardView: View {
                 )
 
                 // MARK: - Game Over
-                // Continue resets the battle in place.
+                // Continue resets the current battle in place.
 
                 if game.isGameOver {
                     GameOverOverlayView(
@@ -119,8 +134,13 @@ struct GameBoardView: View {
                 if let teammate = game.inspectedTeammate,
                    !game.isResolving,
                    !game.isGameOver {
-                    MoveInspectOverlayView(teammate: teammate) {
-                        withAnimation(.easeOut(duration: 0.2)) {
+
+                    MoveInspectOverlayView(
+                        teammate: teammate
+                    ) {
+                        withAnimation(
+                            .easeOut(duration: 0.2)
+                        ) {
                             game.inspectedTeammate = nil
                         }
                     }
@@ -128,7 +148,7 @@ struct GameBoardView: View {
                     .transition(.opacity)
                 }
 
-                // MARK: - Pause
+                // MARK: - Pause Overlay
 
                 if isPaused && !game.isGameOver {
                     pauseOverlay(compact: compact)
@@ -141,7 +161,7 @@ struct GameBoardView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
 
-        // MARK: - Sheets
+        // MARK: - Profile Sheet
 
         .sheet(
             isPresented: $showProfile,
@@ -152,25 +172,26 @@ struct GameBoardView: View {
             PlayerProfileView()
         }
 
-        .sheet(
-            isPresented: $showSettings
-        ) {
+        // MARK: - Settings Sheet
+
+        .sheet(isPresented: $showSettings) {
             SettingsView()
         }
 
-        .sheet(
-            isPresented: $showHowToPlay
-        ) {
+        // MARK: - How to Play Sheet
+
+        .sheet(isPresented: $showHowToPlay) {
             BattleHowToPlayView()
         }
 
-        // MARK: - Pause Exit Confirmation
+        // MARK: - Pause Return Confirmation
 
         .confirmationDialog(
             "Leave the current game?",
             isPresented: $confirmReturnHome,
             titleVisibility: .visible
         ) {
+
             Button(
                 "Return Home",
                 role: .destructive
@@ -189,6 +210,8 @@ struct GameBoardView: View {
             )
         }
 
+        // MARK: - Lifecycle
+
         .onAppear {
             loadAvatar()
         }
@@ -204,24 +227,25 @@ struct GameBoardView: View {
         }
     }
 
-    // MARK: - Continue After Game Over
+    // MARK: - Restart Battle
 
-    // Reset the existing GameBoardView.
-    // Do not dismiss or reset the NavigationStack.
+    // Continue remains inside GameBoardView.
+    // It does not dismiss the view or reset the app navigation.
 
     private func restartBattle() {
         isPaused = false
         confirmReturnHome = false
-
+        game.inspectedTeammate = nil
         game.resetGame()
     }
 
-    // MARK: - Pause Menu Exit
+    // MARK: - Exit Battle
 
-    // This is separate from the end-of-game Continue action.
+    // The pause menu exit is separate from Continue.
 
     private func exitBattle() {
         isPaused = false
+        game.inspectedTeammate = nil
         game.resetGame()
         dismiss()
     }
@@ -272,6 +296,7 @@ struct GameBoardView: View {
                     isPaused = true
                 }
             } label: {
+
                 Image(systemName: "pause.fill")
                     .font(
                         .system(
@@ -334,11 +359,15 @@ struct GameBoardView: View {
 
         return VStack(spacing: 10) {
 
+            // MARK: - Teammate Cards
+
             teammatePanel
                 .frame(
                     maxWidth: .infinity,
                     maxHeight: .infinity
                 )
+
+            // MARK: - Bonk and Action
 
             HStack(spacing: 12) {
 
@@ -359,6 +388,8 @@ struct GameBoardView: View {
                 )
             }
             .frame(height: bossHeight)
+
+            // MARK: - Healer Cards
 
             healerHand(
                 height: handHeight,
@@ -412,6 +443,8 @@ struct GameBoardView: View {
 
         return HStack(spacing: gap) {
 
+            // MARK: - Left Team Section
+
             VStack(spacing: 7) {
 
                 teammatePanel
@@ -427,6 +460,8 @@ struct GameBoardView: View {
                 .frame(height: handHeight)
             }
             .frame(width: teammateWidth)
+
+            // MARK: - Right Boss Section
 
             VStack(spacing: 8) {
 
@@ -449,6 +484,7 @@ struct GameBoardView: View {
     // MARK: - Bonk HP Display
 
     private var bonkWithHP: some View {
+
         GeometryReader { geometry in
 
             let side = min(
@@ -468,6 +504,8 @@ struct GameBoardView: View {
                         maxWidth: .infinity,
                         maxHeight: .infinity
                     )
+
+                // MARK: - HP Label
 
                 Text(
                     "\(max(0, game.bonkHP)) / 5 HP"
@@ -501,9 +539,10 @@ struct GameBoardView: View {
         )
     }
 
-    // MARK: - Teammate Panel
+    // MARK: - Responsive Teammate Panel
 
     private var teammatePanel: some View {
+
         GeometryReader { region in
 
             let outerPadding: CGFloat = 10
@@ -542,14 +581,13 @@ struct GameBoardView: View {
                 .horizontal,
                 showsIndicators: !canShowAll
             ) {
+
                 HStack(
                     alignment: .top,
                     spacing: gap
                 ) {
 
-                    ForEach(
-                        game.teammates
-                    ) { teammate in
+                    ForEach(game.teammates) { teammate in
 
                         TeammateCardView(
                             teammate: teammate
@@ -570,9 +608,7 @@ struct GameBoardView: View {
             }
             .background(
                 lightTan,
-                in: RoundedRectangle(
-                    cornerRadius: 12
-                )
+                in: RoundedRectangle(cornerRadius: 12)
             )
             .overlay {
                 RoundedRectangle(cornerRadius: 12)
@@ -626,9 +662,7 @@ struct GameBoardView: View {
                         Image(card.imageName)
                             .resizable()
                             .scaledToFit()
-                            .frame(
-                                height: cardHeight
-                            )
+                            .frame(height: cardHeight)
                             .shadow(
                                 color: .black.opacity(0.2),
                                 radius: 4,
@@ -643,9 +677,7 @@ struct GameBoardView: View {
                 .frame(minHeight: height)
             }
             .contentShape(Rectangle())
-            .dropDestination(
-                for: String.self
-            ) { items, _ in
+            .dropDestination(for: String.self) { items, _ in
 
                 guard let rawCard = items.first,
                       let healerCard = HealerCard(
@@ -692,9 +724,7 @@ struct GameBoardView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .foregroundStyle(.white)
-                .frame(
-                    maxWidth: .infinity
-                )
+                .frame(maxWidth: .infinity)
                 .frame(
                     height: compact ? 42 : 48
                 )
@@ -808,9 +838,7 @@ struct GameBoardView: View {
                         }
                     }
                     .foregroundStyle(darkBrown)
-                    .padding(
-                        compact ? 15 : 22
-                    )
+                    .padding(compact ? 15 : 22)
                     .frame(maxWidth: 420)
                     .background(
                         paper,
@@ -993,16 +1021,32 @@ struct GameBoardView: View {
 
 // MARK: - Move Inspect Overlay
 
+// Uses IdiotMoveCardView from TeammateCardView.swift.
+// Do not define IdiotMoveCardView again in this file.
+
 struct MoveInspectOverlayView: View {
+
     @ObservedObject var teammate: Teammate
     let onDismiss: () -> Void
 
-    private let darkBrown = Color(red: 0.35, green: 0.23, blue: 0.18)
-    private let cardTan = Color(red: 0.98, green: 0.88, blue: 0.74)
+    private let darkBrown = Color(
+        red: 0.35,
+        green: 0.23,
+        blue: 0.18
+    )
+
+    private let cardTan = Color(
+        red: 0.98,
+        green: 0.88,
+        blue: 0.74
+    )
 
     var body: some View {
-        GeometryReader { geo in
+
+        GeometryReader { geometry in
+
             ZStack {
+
                 Color.black.opacity(0.65)
                     .ignoresSafeArea()
                     .contentShape(Rectangle())
@@ -1011,40 +1055,91 @@ struct MoveInspectOverlayView: View {
                     }
 
                 VStack(spacing: 12) {
+
+                    // MARK: - Teammate Header
+
                     HStack(spacing: 8) {
+
                         Image(teammate.headImageName)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 30, height: 30)
+                            .frame(
+                                width: 30,
+                                height: 30
+                            )
 
-                        Text("\(teammate.name)'s Possible Moves")
-                            .font(.system(size: 16, weight: .black, design: .serif))
-                            .foregroundStyle(darkBrown)
+                        Text(
+                            "\(teammate.name)'s Possible Moves"
+                        )
+                        .font(
+                            .system(
+                                size: 16,
+                                weight: .black,
+                                design: .serif
+                            )
+                        )
+                        .foregroundStyle(darkBrown)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(cardTan, in: Capsule())
-                    .overlay(Capsule().stroke(darkBrown, lineWidth: 2))
+                    .background(
+                        cardTan,
+                        in: Capsule()
+                    )
+                    .overlay {
+                        Capsule()
+                            .stroke(
+                                darkBrown,
+                                lineWidth: 2
+                            )
+                    }
+
+                    // MARK: - Possible Move Cards
+                    // Reuse the illustrated cards from TeammateCardView.
 
                     HStack(spacing: 16) {
-                        IdiotMoveCardView(card: teammate.optionA)
-                            .shadow(color: .black.opacity(0.35), radius: 8, y: 4)
 
-                        IdiotMoveCardView(card: teammate.optionB)
-                            .shadow(color: .black.opacity(0.35), radius: 8, y: 4)
+                        IdiotMoveCardView(
+                            card: teammate.optionA
+                        )
+                        .shadow(
+                            color: .black.opacity(0.35),
+                            radius: 8,
+                            y: 4
+                        )
+
+                        IdiotMoveCardView(
+                            card: teammate.optionB
+                        )
+                        .shadow(
+                            color: .black.opacity(0.35),
+                            radius: 8,
+                            y: 4
+                        )
                     }
                     .frame(
-                        maxWidth: min(460, geo.size.width - 32),
-                        maxHeight: min(280, geo.size.height * 0.62)
+                        maxWidth: min(
+                            460,
+                            geometry.size.width - 32
+                        ),
+                        maxHeight: min(
+                            280,
+                            geometry.size.height * 0.62
+                        )
                     )
-                    .onTapGesture { }
+                    .onTapGesture {}
 
                     Text("Tap outside to close")
                         .font(.caption.bold())
-                        .foregroundStyle(.white.opacity(0.9))
+                        .foregroundStyle(
+                            Color.white.opacity(0.9)
+                        )
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)
-                        .background(Color.black.opacity(0.45), in: Capsule())
+                        .background(
+                            Color.black.opacity(0.45),
+                            in: Capsule()
+                        )
                 }
                 .padding()
             }
@@ -1066,7 +1161,7 @@ private struct BattleHowToPlayView: View {
     )
 
     private let paper = Color(
-        red: 1,
+        red: 1.0,
         green: 243.0 / 255,
         blue: 228.0 / 255
     )
@@ -1104,6 +1199,8 @@ private struct BattleHowToPlayView: View {
                         spacing: compact ? 12 : 20
                     ) {
 
+                        // MARK: - Header
+
                         VStack(spacing: 8) {
 
                             Text("How to Play")
@@ -1121,15 +1218,15 @@ private struct BattleHowToPlayView: View {
                                     .fill(outline)
                                     .frame(height: 1)
 
-                                Image(
-                                    systemName: "swords"
-                                )
+                                Image(systemName: "swords")
 
                                 Rectangle()
                                     .fill(outline)
                                     .frame(height: 1)
                             }
                         }
+
+                        // MARK: - Instructions
 
                         VStack(
                             spacing: compact ? 8 : 12
@@ -1160,6 +1257,8 @@ private struct BattleHowToPlayView: View {
                             )
                         }
 
+                        // MARK: - Dismiss Instructions
+
                         Button {
                             dismiss()
                         } label: {
@@ -1167,9 +1266,7 @@ private struct BattleHowToPlayView: View {
                             Text("Got It")
                                 .font(.headline.bold())
                                 .foregroundStyle(.white)
-                                .frame(
-                                    maxWidth: .infinity
-                                )
+                                .frame(maxWidth: .infinity)
                                 .frame(
                                     height: compact ? 40 : 50
                                 )
@@ -1202,13 +1299,9 @@ private struct BattleHowToPlayView: View {
                     .frame(maxWidth: 520)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
-                    .frame(
-                        maxWidth: .infinity
-                    )
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(
-                    maxHeight: geometry.size.height
-                )
+                .frame(maxHeight: geometry.size.height)
             }
         }
         .presentationDetents([.large])
@@ -1243,12 +1336,16 @@ private struct BattleHowToPlayView: View {
                 )
 
             Rectangle()
-                .fill(outline.opacity(0.7))
+                .fill(
+                    outline.opacity(0.7)
+                )
                 .frame(width: 1)
 
             Text(text)
                 .font(
-                    .system(size: compact ? 13 : 15)
+                    .system(
+                        size: compact ? 13 : 15
+                    )
                 )
                 .fixedSize(
                     horizontal: false,
@@ -1260,7 +1357,9 @@ private struct BattleHowToPlayView: View {
                 )
         }
         .foregroundStyle(brown)
-        .padding(compact ? 10 : 15)
+        .padding(
+            compact ? 10 : 15
+        )
         .frame(
             maxWidth: .infinity,
             alignment: .leading
@@ -1281,21 +1380,12 @@ private struct BattleHowToPlayView: View {
 
 // MARK: - Game Over Overlay
 
+// Displays one Continue button for both victory and defeat.
+
 struct GameOverOverlayView: View {
+
     let didWin: Bool
     let onContinue: () -> Void
-
-    private let backgroundTan = Color(
-        red: 252.0 / 255,
-        green: 220.0 / 255,
-        blue: 187.0 / 255
-    )
-
-    private let paper = Color(
-        red: 1,
-        green: 243.0 / 255,
-        blue: 228.0 / 255
-    )
 
     private let darkBrown = Color(
         red: 0.35,
@@ -1303,27 +1393,78 @@ struct GameOverOverlayView: View {
         blue: 0.18
     )
 
+    private let paper = Color(
+        red: 1.0,
+        green: 243.0 / 255,
+        blue: 228.0 / 255
+    )
+
+    private let borderBrown = Color(
+        red: 0.55,
+        green: 0.39,
+        blue: 0.29
+    )
+
+    private let victoryGreen = Color(
+        red: 0.15,
+        green: 0.40,
+        blue: 0.19
+    )
+
+    private let defeatRed = Color(
+        red: 0.65,
+        green: 0.16,
+        blue: 0.13
+    )
+
     var body: some View {
+
         GeometryReader { geometry in
-            let compact = geometry.size.height < 410
+
+            let compact =
+                geometry.size.height < 410
 
             ZStack {
-                Color.black.opacity(0.6)
+
+                Color.black.opacity(0.60)
                     .ignoresSafeArea()
 
-                VStack(spacing: compact ? 10 : 16) {
-                    if didWin {
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: compact ? 34 : 46))
-                            .foregroundStyle(Color.orange)
-                    } else {
-                        Image("ghost")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: compact ? 48 : 68)
-                    }
+                ScrollView(
+                    .vertical,
+                    showsIndicators: false
+                ) {
 
-                    Text(didWin ? "Victory!" : "Defeat!")
+                    VStack(
+                        spacing: compact ? 12 : 18
+                    ) {
+
+                        // MARK: - Result Icon
+
+                        if didWin {
+
+                            Image(systemName: "crown.fill")
+                                .font(
+                                    .system(
+                                        size: compact ? 32 : 46
+                                    )
+                                )
+                                .foregroundStyle(victoryGreen)
+
+                        } else {
+
+                            Image("ghost")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(
+                                    height: compact ? 48 : 68
+                                )
+                        }
+
+                        // MARK: - Result Title
+
+                        Text(
+                            didWin ? "Victory!" : "Defeat!"
+                        )
                         .font(
                             .system(
                                 size: compact ? 28 : 36,
@@ -1331,63 +1472,52 @@ struct GameOverOverlayView: View {
                                 design: .serif
                             )
                         )
-                        .foregroundStyle(didWin ? Color.green : Color.red)
-
-                    Text(
-                        didWin
-                            ? "Bonk has been defeated! Somehow, you kept the idiots alive."
-                            : "Too many idiots became ghosts. Better luck keeping them out of trouble next time!"
-                    )
-                    .font(
-                        .system(
-                            size: compact ? 13 : 15,
-                            weight: .medium,
-                            design: .serif
+                        .foregroundStyle(
+                            didWin
+                                ? victoryGreen
+                                : defeatRed
                         )
-                    )
-                    .foregroundStyle(darkBrown)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 8)
 
-                    VStack(spacing: compact ? 8 : 12) {
-                        Button(action: onPlayAgain) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "arrow.counterclockwise")
-                                Text("Play Again")
-                            }
-                            .font(.headline.bold())
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: compact ? 42 : 48)
-                            .background(Color.green, in: Capsule())
-                            .overlay {
-                                Capsule()
-                                    .stroke(darkBrown, lineWidth: 1.5)
-                            }
-                        }
-                        .buttonStyle(.plain)
+                        // MARK: - Result Description
 
-                        Button(action: onReturnHome) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "house.fill")
-                                Text("Return Home")
-                            }
-                            .font(.headline.bold())
-                            .foregroundStyle(darkBrown)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: compact ? 40 : 46)
-                            .background(backgroundTan, in: Capsule())
-                            .overlay {
-                                Capsule()
-                                    .stroke(darkBrown, lineWidth: 1.5)
-                            }
-                            .font(.headline.bold())
-                            .foregroundStyle(.white)
-                            .frame(
-                                maxWidth: .infinity
+                        Text(
+                            didWin
+                                ? "Bonk has been defeated! Somehow, you kept the idiots alive."
+                                : "Too many idiots became ghosts. Better luck keeping them out of trouble next time!"
+                        )
+                        .font(
+                            .system(
+                                size: compact ? 13 : 15,
+                                weight: .medium,
+                                design: .serif
                             )
-                            .frame(height: 48)
+                        )
+                        .foregroundStyle(darkBrown)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(
+                            horizontal: false,
+                            vertical: true
+                        )
+                        .padding(.horizontal, 8)
+
+                        // MARK: - Continue Button
+
+                        Button(action: onContinue) {
+
+                            HStack(spacing: 10) {
+
+                                Text("Continue")
+
+                                Image(
+                                    systemName: "arrow.right"
+                                )
+                            }
+                            .font(.headline.bold())
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(
+                                height: compact ? 42 : 48
+                            )
                             .background(
                                 darkBrown,
                                 in: Capsule()
@@ -1397,27 +1527,47 @@ struct GameOverOverlayView: View {
                         .accessibilityLabel(
                             "Continue to battle setup"
                         )
+                        .padding(.top, 4)
                     }
-                    .padding(.top, 4)
+                    .padding(
+                        compact ? 18 : 26
+                    )
+                    .frame(maxWidth: 400)
+                    .background(
+                        paper,
+                        in: RoundedRectangle(
+                            cornerRadius: 22
+                        )
+                    )
+                    .overlay {
+                        RoundedRectangle(
+                            cornerRadius: 22
+                        )
+                        .stroke(
+                            borderBrown,
+                            lineWidth: 2
+                        )
+                    }
+                    .shadow(
+                        color: .black.opacity(0.25),
+                        radius: 16,
+                        y: 8
+                    )
+                    .padding(16)
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(compact ? 18 : 26)
-                .frame(maxWidth: 400)
-                .background(
-                    paper,
-                    in: RoundedRectangle(cornerRadius: 22)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 22)
-                        .stroke(darkBrown, lineWidth: 2)
-                }
-                .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
-                .padding(16)
+                .frame(maxHeight: geometry.size.height)
             }
         }
     }
 }
 
+// MARK: - Preview
+
 #Preview {
-    GameBoardView()
-        .environmentObject(GameManager())
+    NavigationStack {
+        GameBoardView()
+            .environmentObject(GameManager())
+    }
 }
+
