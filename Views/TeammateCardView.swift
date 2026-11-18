@@ -235,13 +235,16 @@ struct TeammateCardView: View {
         VStack(spacing: 7) {
             Spacer(minLength: 0)
 
-            Image("ghost")
-                .resizable()
-                .scaledToFit()
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: compact ? 60 : 100
-                )
+            if let card = game.stolenCards[teammate.id] {
+                GhostWithStolenCard(card: card)
+                    .opacity(game.pendingThefts.contains { $0.id == teammate.id } ? 0 : 1)
+                    .anchorPreference(key: TheftAnchors.self, value: .bounds) {
+                        [.panel(teammate.id): $0]
+                    }
+            } else {
+                Image("ghost").resizable().scaledToFit()
+                    .frame(maxHeight: compact ? 60 : 100)
+            }
 
             Text("GHOST")
                 .font(
@@ -424,4 +427,23 @@ struct IdiotMoveCardView: View {
     )
     .environmentObject(GameManager())
     .frame(width: 225, height: 310)
+}
+
+struct GhostWithStolenCard: View {
+    let card: HealerCard
+
+    var body: some View {
+        ZStack {
+            Image(card.imageName)
+                .resizable().scaledToFit().frame(height: 50)
+                .grayscale(1).opacity(0.48)
+                .rotationEffect(.degrees(-8)).offset(y: 17)
+            Image("ghost")
+                .resizable().scaledToFit().frame(width: 102)
+                .offset(y: -12)
+        }
+        .frame(height: 85)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Ghost holding \(card.rawValue)")
+    }
 }
