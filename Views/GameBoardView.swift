@@ -17,7 +17,6 @@ import UIKit
 struct GameBoardView: View {
 
     @EnvironmentObject var game: GameManager
-    @Environment(\.dismiss) private var dismiss
 
     // MARK: - Profile
 
@@ -32,7 +31,6 @@ struct GameBoardView: View {
     @State private var isPaused = false
     @State private var showSettings = false
     @State private var showHowToPlay = false
-    @State private var confirmReturnHome = false
 
     // MARK: - Colors
 
@@ -191,32 +189,6 @@ struct GameBoardView: View {
             BattleHowToPlayView()
         }
 
-        // MARK: - Pause Return Confirmation
-
-        .confirmationDialog(
-            "Leave the current game?",
-            isPresented: $confirmReturnHome,
-            titleVisibility: .visible
-        ) {
-
-            Button(
-                "Return Home",
-                role: .destructive
-            ) {
-                exitBattle()
-            }
-
-            Button(
-                "Keep Playing",
-                role: .cancel
-            ) {}
-
-        } message: {
-            Text(
-                "Your current battle progress will be lost."
-            )
-        }
-
         // MARK: - Lifecycle
 
         .onAppear {
@@ -241,20 +213,8 @@ struct GameBoardView: View {
 
     private func restartBattle() {
         isPaused = false
-        confirmReturnHome = false
         game.inspectedTeammate = nil
         game.resetGame()
-    }
-
-    // MARK: - Exit Battle
-
-    // The pause menu exit is separate from Continue.
-
-    private func exitBattle() {
-        isPaused = false
-        game.inspectedTeammate = nil
-        game.resetGame()
-        dismiss()
     }
 
     // MARK: - Top Bar
@@ -857,13 +817,6 @@ private func healerHand(
                             showHowToPlay = true
                         }
 
-                        pauseMenuButton(
-                            "Return Home",
-                            icon: "house.fill",
-                            compact: compact
-                        ) {
-                            confirmReturnHome = true
-                        }
                     }
                     .foregroundStyle(darkBrown)
                     .padding(compact ? 15 : 22)
@@ -1598,4 +1551,5 @@ struct GameOverOverlayView: View {
             .environmentObject(GameManager())
     }
 }
+
 

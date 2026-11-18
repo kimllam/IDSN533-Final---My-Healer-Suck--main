@@ -29,6 +29,17 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 }
 
+// MARK: - Root Navigation
+
+@MainActor
+final class AppRouteState: ObservableObject {
+    @Published private(set) var rootID = UUID()
+
+    func returnToLaunchScreen() {
+        rootID = UUID()
+    }
+}
+
 // MARK: - Main App
 
 @main
@@ -41,6 +52,7 @@ struct MyHealerSucksApp: App {
     private var delegate
 
     @StateObject private var game = GameManager()
+    @StateObject private var appRoute = AppRouteState()
 
     @StateObject private var authManager: AuthManager
 
@@ -71,6 +83,8 @@ struct MyHealerSucksApp: App {
             
 
             // Shared game state
+            .id(appRoute.rootID)
+            .environmentObject(appRoute)
             .environmentObject(game)
 
             // Shared authentication state
@@ -86,3 +100,4 @@ struct MyHealerSucksApp: App {
         }
     }
 }
+

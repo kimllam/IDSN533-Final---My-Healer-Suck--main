@@ -556,10 +556,18 @@ class GameManager: ObservableObject {
 
     @discardableResult
     private func checkGameOverConditions() -> Bool {
+        // Prevent duplicate battle records.
+        if isGameOver { return true }
+
         if bonkHP <= 0 {
             didPlayerWin = true
             isGameOver = true
             resolutionBannerText = "BONK IS DEFEATED!"
+            GameRecordStore.shared.record(
+                didWin: true,
+                rounds: encounterNumber,
+                survivingIdiots: livingTeammates.count
+            )
             return true
         }
 
@@ -568,6 +576,11 @@ class GameManager: ObservableObject {
             isGameOver = true
             resolutionBannerText =
                 "2 Idiots became Ghosts!"
+            GameRecordStore.shared.record(
+                didWin: false,
+                rounds: encounterNumber,
+                survivingIdiots: livingTeammates.count
+            )
             return true
         }
 
@@ -603,3 +616,4 @@ class GameManager: ObservableObject {
         inspectedTeammate = nil
     }
 }
+
