@@ -65,7 +65,7 @@ final class GameRecordStore: ObservableObject {
 
         case .luckyEscape:
             return battles.contains {
-                $0.didWin && $0.survivors == 1
+                $0.didWin && $0.survivors == 2
             }
 
         case .perfectBabysitter:
@@ -112,7 +112,7 @@ enum BattleAchievement: String, CaseIterable, Identifiable {
         case .firstVictory:
             return "Defeat Bonk for the first time"
         case .luckyEscape:
-            return "Win with exactly one Idiot alive"
+            return "Win with exactly two Idiots alive"
         case .perfectBabysitter:
             return "Win with all three Idiots alive"
         case .persistentHealer:
@@ -133,3 +133,4 @@ enum BattleAchievement: String, CaseIterable, Identifiable {
         }
     }
 }
+
