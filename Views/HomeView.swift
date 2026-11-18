@@ -13,6 +13,8 @@ import SwiftUI
 struct HomeView: View {
 
     @EnvironmentObject var game: GameManager
+    @EnvironmentObject private var auth: AuthManager
+    @AppStorage("entryMode") private var entryMode = ""
 
     @State private var showHowToPlay = false
     @State private var showSettings = false
@@ -92,6 +94,15 @@ struct HomeView: View {
             .hidden,
             for: .navigationBar
         )
+
+        // MARK: - Refresh Account Verification
+
+        .task(id: auth.userID) {
+            // Restore the current Firebase user without requesting a password.
+            if auth.isLoggedIn && !auth.isEmailVerified {
+                _ = try? await auth.checkEmailVerification()
+            }
+        }
 
         // MARK: - Sheets
 
@@ -331,7 +342,16 @@ struct HomeView: View {
 
     private var playButton: some View {
         NavigationLink {
-            WelcomeView()
+            if auth.isLoggedIn && auth.isEmailVerified {
+                GameBoardView()
+                    .navigationBarBackButtonHidden(true)
+                    .toolbar(.hidden, for: .navigationBar)
+                    .onAppear {
+                        entryMode = "account"
+                    }
+            } else {
+                WelcomeView()
+            }
         } label: {
 
             Text("Play")
@@ -362,6 +382,7 @@ struct HomeView: View {
                 )
         }
         .buttonStyle(.plain)
+        .disabled(!auth.hasCheckedAuthState)
     }
 
     // MARK: - How to Play Button
@@ -644,3 +665,4 @@ struct HowToPlaySheetView: View {
     }
     .environmentObject(GameManager())
 }
+

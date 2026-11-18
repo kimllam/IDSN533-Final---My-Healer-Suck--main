@@ -191,6 +191,20 @@ private struct PaperRow: View {
 // MARK: - Main Player Profile
 
 struct PlayerProfileView: View {
+    @EnvironmentObject private var auth: AuthManager
+    @EnvironmentObject private var game: GameManager
+    @EnvironmentObject private var appRoute: AppRouteState
+
+    @AppStorage("entryMode") private var entryMode = ""
+    @State private var showExitConfirmation = false
+    @State private var showExitError = false
+    @State private var exitErrorMessage = ""
+
+    // Guest and registered account have different exit semantics.
+    private var isGuest: Bool {
+        entryMode == "guest" || !auth.isLoggedIn
+    }
+
     @AppStorage("playerNickname")
     private var nickname = ""
 
@@ -345,6 +359,33 @@ struct PlayerProfileView: View {
                                 landscape: isLandscape
                             )
                             .padding(.top, 12)
+
+                            // Guests return home without calling Firebase sign-out.
+                            // Registered accounts explicitly log out.
+                            Button {
+                                showExitConfirmation = true
+                            } label: {
+                                Label(
+                                    isGuest ? "Return to Home" : "Log Out",
+                                    systemImage: isGuest
+                                        ? "house.fill"
+                                        : "rectangle.portrait.and.arrow.right"
+                                )
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(ProfileStyle.brown)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(
+                                    ProfileStyle.paper,
+                                    in: RoundedRectangle(cornerRadius: 14)
+                                )
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(ProfileStyle.line, lineWidth: 1.3)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.top, 4)
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 14)
@@ -362,6 +403,45 @@ struct PlayerProfileView: View {
             }
         }
         .tint(ProfileStyle.brown)
+        .confirmationDialog(
+            isGuest ? "Return to Home?" : "Log Out?",
+            isPresented: $showExitConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(
+                isGuest ? "Return to Home" : "Log Out",
+                role: isGuest ? nil : .destructive
+            ) {
+                exitToLaunchScreen()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Return to the original Play screen?")
+        }
+        .alert("Unable to Exit", isPresented: $showExitError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(exitErrorMessage)
+        }
+    }
+
+    // MARK: - Exit To Initial Screen
+
+    private func exitToLaunchScreen() {
+        do {
+            // Only account holders who selected account mode are signed out.
+            if !isGuest {
+                try auth.logOut()
+            }
+
+            entryMode = ""
+            game.inspectedTeammate = nil
+            game.resetGame()
+            appRoute.returnToLaunchScreen()
+        } catch {
+            exitErrorMessage = error.localizedDescription
+            showExitError = true
+        }
     }
 
     // MARK: - Party Showcase
@@ -594,7 +674,7 @@ private struct EditProfileScreen: View {
                     .font(.headline)
 
                     Text(
-                        "Your nickname, avatar and battle records are stored on this device. Password management and sign-out require a real registered account."
+                        "Your nickname, avatar and battle records are stored on this device. Guests may return to the opening screen. Registered accounts can log out."
                     )
                     .font(.subheadline)
                     .foregroundStyle(
@@ -1094,4 +1174,8 @@ private struct BattleAchievementsScreen: View {
 
 #Preview {
     PlayerProfileView()
+        .environmentObject(GameManager())
+        .environmentObject(AuthManager())
+        .environmentObject(AppRouteState())
 }
+
