@@ -574,34 +574,42 @@ struct GameBoardView: View {
                 region.size.height - outerPadding * 2
             )
 
-            ScrollView(
-                .horizontal,
-                showsIndicators: !canShowAll
-            ) {
-
-                HStack(
-                    alignment: .top,
-                    spacing: gap
+            ScrollViewReader { scroll in
+                ScrollView(
+                    .horizontal,
+                    showsIndicators: !canShowAll
                 ) {
 
-                    ForEach(game.teammates) { teammate in
+                    HStack(
+                        alignment: .top,
+                        spacing: gap
+                    ) {
 
-                        TeammateCardView(
-                            teammate: teammate
-                        )
-                        .frame(
-                            width: cardWidth,
-                            height: cardHeight
-                        )
+                        ForEach(game.teammates) { teammate in
+
+                            TeammateCardView(
+                                teammate: teammate
+                            )
+                            .frame(
+                                width: cardWidth,
+                                height: cardHeight
+                            )
+                            .id(teammate.id)
+                        }
+                    }
+                    .padding(outerPadding)
+                    .frame(
+                        minWidth: region.size.width,
+                        alignment: canShowAll
+                            ? .center
+                            : .leading
+                    )
+                }
+                .task(id: game.pendingThefts.first?.id) {
+                    if let theft = game.pendingThefts.first {
+                        scroll.scrollTo(theft.id, anchor: .center)
                     }
                 }
-                .padding(outerPadding)
-                .frame(
-                    minWidth: region.size.width,
-                    alignment: canShowAll
-                        ? .center
-                        : .leading
-                )
             }
             .background(
                 lightTan,
@@ -641,42 +649,50 @@ private func healerHand(
                     .allowsHitTesting(false)
                 
                 GeometryReader { scrollGeo in
-                    ScrollView(
-                        .horizontal,
-                        showsIndicators: false
-                    ) {
+                    ScrollViewReader { scroll in
+                        ScrollView(
+                            .horizontal,
+                            showsIndicators: false
+                        ) {
                         
-                        HStack(spacing: 16) {
+                            HStack(spacing: 16) {
                             
-                            ForEach(
-                                displayedHealerCards,
-                                id: \.self
-                            ) { card in
+                                ForEach(
+                                    displayedHealerCards,
+                                    id: \.self
+                                ) { card in
                                 
-                                Image(card.imageName)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(height: cardHeight)
-                                    .shadow(
-                                        color: .black.opacity(0.22),
-                                        radius: 4,
-                                        y: 2
-                                    )
-                                    .opacity(game.pendingThefts.contains { $0.card == card } ? 0 : 1)
-                                    .anchorPreference(key: TheftAnchors.self, value: .bounds) {
-                                        [.hand(card): $0]
-                                    }
-                                    .draggable(card.rawValue)
-                                    .accessibilityLabel(
-                                        card.rawValue
-                                    )
+                                    Image(card.imageName)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(height: cardHeight)
+                                        .shadow(
+                                            color: .black.opacity(0.22),
+                                            radius: 4,
+                                            y: 2
+                                        )
+                                        .opacity(game.pendingThefts.contains { $0.card == card } ? 0 : 1)
+                                        .anchorPreference(key: TheftAnchors.self, value: .bounds) {
+                                            [.hand(card): $0]
+                                        }
+                                        .id(card)
+                                        .draggable(card.rawValue)
+                                        .accessibilityLabel(
+                                            card.rawValue
+                                        )
+                                }
+                            }
+                            .frame(
+                                minWidth: scrollGeo.size.width,
+                                minHeight: height,
+                                alignment: .center
+                            )
+                        }
+                        .task(id: game.pendingThefts.first?.card) {
+                            if let theft = game.pendingThefts.first {
+                                scroll.scrollTo(theft.card, anchor: .center)
                             }
                         }
-                        .frame(
-                            minWidth: scrollGeo.size.width,
-                            minHeight: height,
-                            alignment: .center
-                        )
                     }
                 }
                 Color.clear
