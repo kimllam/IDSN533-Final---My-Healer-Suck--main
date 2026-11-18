@@ -205,8 +205,36 @@ struct PlayerProfileView: View {
         entryMode == "guest" || !auth.isLoggedIn
     }
 
-    @AppStorage("playerNickname")
-    private var nickname = ""
+    // Keep guest and registered account nicknames separate.
+    @State private var nickname = ""
+
+    private var nicknameStorageKey: String {
+        if isGuest {
+            return "playerNickname.guest"
+        }
+        return "playerNickname.account.\(auth.userID ?? "unknown")"
+    }
+
+    private func loadNickname() {
+        let defaults = UserDefaults.standard
+        let key = nicknameStorageKey
+
+        // Import the previous shared nickname for only one account.
+        // Never import an account nickname into the guest profile.
+        if !isGuest, let uid = auth.userID {
+            let migrationOwnerKey = "playerNickname.legacyOwnerUID"
+            if defaults.string(forKey: migrationOwnerKey) == nil,
+               let legacy = defaults.string(forKey: "playerNickname"),
+               !legacy.isEmpty {
+                defaults.set(uid, forKey: migrationOwnerKey)
+                if defaults.object(forKey: key) == nil {
+                    defaults.set(legacy, forKey: key)
+                }
+            }
+        }
+
+        nickname = defaults.string(forKey: key) ?? ""
+    }
 
     @AppStorage("playerAvatarChoice")
     private var avatarChoice = "healer card"
@@ -331,29 +359,47 @@ struct PlayerProfileView: View {
                             }
                             .buttonStyle(.plain)
 
-                            NavigationLink {
-                                BattleStatisticsScreen(
-                                    records: records
-                                )
-                            } label: {
-                                PaperRow(
-                                    title: "Game Statistics",
-                                    icon: "chart.bar.fill"
-                                )
-                            }
-                            .buttonStyle(.plain)
+                            if isGuest {
+                                Button {
+                                    // Guests can open the existing account selection screen.
+                                    // No Firebase sign-out is performed.
+                                    game.inspectedTeammate = nil
+                                    game.resetGame()
+                                    entryMode = ""
+                                    appRoute.returnToAccountSelection()
+                                } label: {
+                                    PaperRow(
+                                        title: "Create Account / Log In",
+                                        icon: "person.badge.plus"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                NavigationLink {
+                                    BattleStatisticsScreen(
+                                        records: records
+                                    )
+                                } label: {
+                                    PaperRow(
+                                        title: "Game Statistics",
+                                        icon: "chart.bar.fill"
+                                    )
+                                }
+                                .buttonStyle(.plain)
 
-                            NavigationLink {
-                                BattleAchievementsScreen(
-                                    records: records
-                                )
-                            } label: {
-                                PaperRow(
-                                    title: "Achievements",
-                                    icon: "trophy.fill"
-                                )
+                                NavigationLink {
+                                    BattleAchievementsScreen(
+                                        records: records
+                                    )
+                                } label: {
+                                    PaperRow(
+                                        title: "Achievements",
+                                        icon: "trophy.fill"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
                             }
-                            .buttonStyle(.plain)
 
                             partyShowcase(
                                 landscape: isLandscape
@@ -400,6 +446,19 @@ struct PlayerProfileView: View {
             .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 avatarPhoto = AvatarFile.load()
+                loadNickname()
+                if !isGuest {
+                    records.refreshForCurrentAccount()
+                }
+            }
+            .onChange(of: nickname) { _, value in
+                UserDefaults.standard.set(value, forKey: nicknameStorageKey)
+            }
+            .onChange(of: entryMode) { _, _ in
+                loadNickname()
+            }
+            .onChange(of: auth.userID) { _, _ in
+                loadNickname()
             }
         }
         .tint(ProfileStyle.brown)
@@ -1178,4 +1237,5 @@ private struct BattleAchievementsScreen: View {
         .environmentObject(AuthManager())
         .environmentObject(AppRouteState())
 }
+
 

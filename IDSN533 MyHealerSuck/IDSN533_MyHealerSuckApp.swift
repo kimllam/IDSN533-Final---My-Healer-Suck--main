@@ -34,8 +34,15 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 @MainActor
 final class AppRouteState: ObservableObject {
     @Published private(set) var rootID = UUID()
+    @Published private(set) var showingAccountSelection = false
 
     func returnToLaunchScreen() {
+        showingAccountSelection = false
+        rootID = UUID()
+    }
+
+    func returnToAccountSelection() {
+        showingAccountSelection = true
         rootID = UUID()
     }
 }
@@ -76,9 +83,11 @@ struct MyHealerSucksApp: App {
         WindowGroup {
 
             NavigationStack {
-
-                HomeView()
-
+                if appRoute.showingAccountSelection {
+                    WelcomeView()
+                } else {
+                    HomeView()
+                }
             }
             
 
@@ -100,4 +109,5 @@ struct MyHealerSucksApp: App {
         }
     }
 }
+
 

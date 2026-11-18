@@ -8,8 +8,9 @@
 
 import Foundation
 import Combine
+import FirebaseAuth
 
-// Stores completed battle results locally, without Firebase or an account.
+// Stores per-account battle results locally; Firebase supplies the user ID.
 struct SavedBattle: Codable, Identifiable {
     var id: UUID
     var date: Date
@@ -23,12 +24,31 @@ final class GameRecordStore: ObservableObject {
     static let shared = GameRecordStore()
 
     @Published private(set) var battles: [SavedBattle] = []
-    private let storageKey = "myHealerSucks.completedBattles.v1"
 
-    private init() {
-        if let data = UserDefaults.standard.data(forKey: storageKey),
+    // Each registered account has isolated local battle records.
+    // Guest gameplay never reads or creates a record.
+    private var loadedUserID: String?
+
+    private init() {}
+
+    private func storageKey(for userID: String) -> String {
+        "myHealerSucks.completedBattles.account.\(userID).v1"
+    }
+
+    func refreshForCurrentAccount() {
+        let uid = Auth.auth().currentUser?.uid
+        guard uid != loadedUserID else { return }
+        loadedUserID = uid
+        guard let uid else {
+            battles = []
+            return
+        }
+        let key = storageKey(for: uid)
+        if let data = UserDefaults.standard.data(forKey: key),
            let saved = try? JSONDecoder().decode([SavedBattle].self, from: data) {
             battles = saved
+        } else {
+            battles = []
         }
     }
 
@@ -46,6 +66,11 @@ final class GameRecordStore: ObservableObject {
         rounds: Int,
         survivingIdiots: Int
     ) {
+        // Do not save guest wins or losses as account achievements.
+        guard UserDefaults.standard.string(forKey: "entryMode") == "account",
+              let user = Auth.auth().currentUser,
+              user.isEmailVerified else { return }
+        refreshForCurrentAccount()
         let result = SavedBattle(
             id: UUID(),
             date: Date(),
@@ -82,7 +107,8 @@ final class GameRecordStore: ObservableObject {
         guard let data = try? JSONEncoder().encode(battles)
         else { return }
 
-        UserDefaults.standard.set(data, forKey: storageKey)
+        guard let uid = loadedUserID else { return }
+        UserDefaults.standard.set(data, forKey: storageKey(for: uid))
     }
 }
 
@@ -133,4 +159,5 @@ enum BattleAchievement: String, CaseIterable, Identifiable {
         }
     }
 }
+
 

@@ -20,6 +20,7 @@ struct AuthView: View {
     }
 
     @EnvironmentObject private var auth: AuthManager
+    @AppStorage("entryMode") private var entryMode = ""
 
     @State private var mode: Mode
 
@@ -708,6 +709,7 @@ struct AuthView: View {
                     try await auth.checkEmailVerification()
 
                 if verified {
+                    entryMode = "account"
                     navigateToGame = true
                 } else {
                     showVerification = true
@@ -745,6 +747,7 @@ struct AuthView: View {
                 // Enter the game only after
                 // Firebase confirms verification.
 
+                entryMode = "account"
                 navigateToGame = true
 
             } else {
@@ -881,4 +884,5 @@ struct AuthView: View {
     .environmentObject(GameManager())
     .environmentObject(AuthManager())
 }
+
 

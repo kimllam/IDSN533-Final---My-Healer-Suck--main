@@ -17,6 +17,13 @@ import UIKit
 struct GameBoardView: View {
 
     @EnvironmentObject var game: GameManager
+    @EnvironmentObject private var auth: AuthManager
+    @EnvironmentObject private var appRoute: AppRouteState
+    @AppStorage("entryMode") private var entryMode = ""
+
+    private var isRegisteredPlayer: Bool {
+        entryMode == "account" && auth.isLoggedIn && auth.isEmailVerified
+    }
 
     // MARK: - Profile
 
@@ -125,7 +132,13 @@ struct GameBoardView: View {
                                     didWin: game.didPlayerWin,
                                     onContinue: {
                                         restartBattle()
-                                    }
+                                    },
+                                    onReturnHome: isRegisteredPlayer ? {
+                                        isPaused = false
+                                        game.inspectedTeammate = nil
+                                        game.resetGame()
+                                        appRoute.returnToLaunchScreen()
+                                    } : nil
                                 )
                                 .zIndex(10)
                             }
@@ -1408,6 +1421,7 @@ struct GameOverOverlayView: View {
 
     let didWin: Bool
     let onContinue: () -> Void
+    let onReturnHome: (() -> Void)?
 
     private let darkBrown = Color(
         red: 0.35,
@@ -1550,6 +1564,26 @@ struct GameOverOverlayView: View {
                             "Continue to battle setup"
                         )
                         .padding(.top, 4)
+
+                        // Registered players can return to the original Play screen.
+                        if let onReturnHome {
+                            Button(action: onReturnHome) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "house.fill")
+                                    Text("Return to Home")
+                                }
+                                .font(.headline.bold())
+                                .foregroundStyle(darkBrown)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: compact ? 42 : 48)
+                                .background(paper, in: Capsule())
+                                .overlay {
+                                    Capsule()
+                                        .stroke(darkBrown, lineWidth: 2)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                     .padding(
                         compact ? 18 : 26
@@ -1658,3 +1692,4 @@ private struct BoardGhostFlight: View {
         }
     }
 }
+
