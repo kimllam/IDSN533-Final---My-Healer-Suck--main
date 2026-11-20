@@ -240,11 +240,24 @@ struct PlayerProfileView: View {
         avatarPhoto = AvatarFile.load(for: avatarScope)
     }
 
+    private func connectProfileCloud() {
+        guard !isGuest, let uid = auth.userID else {
+            cloudProfile.disconnect()
+            return
+        }
+        cloudProfile.connect(
+            uid: uid,
+            localNickname: nickname,
+            localAvatarChoice: avatarChoice
+        )
+    }
+
     @Environment(\.dismiss)
     private var dismiss
 
     @State private var avatarPhoto: UIImage?
     @StateObject private var records = GameRecordStore.shared
+    @StateObject private var cloudProfile = CloudPlayerProfileStore()
 
     var body: some View {
         NavigationStack {
@@ -298,7 +311,13 @@ struct PlayerProfileView: View {
                                     nickname: $nickname,
                                     avatarChoice: $avatarChoice,
                                     avatarPhoto: $avatarPhoto,
-                                    avatarScope: avatarScope
+                                    avatarScope: avatarScope,
+                                    onSaveNickname: { value in
+                                        if !isGuest { cloudProfile.saveNickname(value) }
+                                    },
+                                    onChooseBuiltInAvatar: { choice in
+                                        if !isGuest { cloudProfile.saveBuiltInAvatar(choice) }
+                                    }
                                 )
                             } label: {
                                 HStack(spacing: 14) {
@@ -454,6 +473,7 @@ struct PlayerProfileView: View {
                 if !isGuest {
                     records.refreshForCurrentAccount()
                 }
+                connectProfileCloud()
             }
             .onChange(of: avatarChoice) { _, value in
                 UserDefaults.standard.set(value, forKey: avatarChoiceKey)
@@ -461,16 +481,38 @@ struct PlayerProfileView: View {
             .onChange(of: nickname) { _, value in
                 UserDefaults.standard.set(value, forKey: nicknameStorageKey)
             }
+            .onChange(of: cloudProfile.remoteNickname) { _, value in
+                guard !isGuest, cloudProfile.activeUID == auth.userID,
+                      let value else { return }
+                nickname = value
+            }
+            .onChange(of: cloudProfile.remoteAvatarChoice) { _, value in
+                guard !isGuest, cloudProfile.activeUID == auth.userID,
+                      let value else { return }
+                // A local personal photo takes precedence on this device.
+                if avatarChoice == "photo", avatarPhoto != nil { return }
+                avatarChoice = value
+            }
             .onChange(of: entryMode) { _, _ in
                 loadNickname()
                 loadAvatarSettings()
+                connectProfileCloud()
             }
             .onChange(of: auth.userID) { _, _ in
                 loadNickname()
                 loadAvatarSettings()
+                connectProfileCloud()
+            }
+            .onChange(of: auth.isEmailVerified) { _, _ in
+                connectProfileCloud()
             }
         }
         .tint(ProfileStyle.brown)
+        .onDisappear {
+            // Keep syncing while navigating to Edit Profile.
+            // Disconnect only when this profile flow is dismissed.
+            cloudProfile.disconnect()
+        }
         .confirmationDialog(
             isGuest ? "Return to Home?" : "Log Out?",
             isPresented: $showExitConfirmation,
@@ -598,6 +640,8 @@ private struct EditProfileScreen: View {
     @Binding var avatarChoice: String
     @Binding var avatarPhoto: UIImage?
     let avatarScope: String
+    let onSaveNickname: (String) -> Void
+    let onChooseBuiltInAvatar: (String) -> Void
 
     @State private var draft = ""
     @State private var saved = false
@@ -627,7 +671,8 @@ private struct EditProfileScreen: View {
                     ChooseAvatarScreen(
                         choice: $avatarChoice,
                         photo: $avatarPhoto,
-                        avatarScope: avatarScope
+                        avatarScope: avatarScope,
+                        onChooseBuiltInAvatar: onChooseBuiltInAvatar
                     )
                 } label: {
                     VStack(spacing: 8) {
@@ -702,6 +747,7 @@ private struct EditProfileScreen: View {
                         nickname = cleaned
                         draft = cleaned
                         focused = false
+                        onSaveNickname(cleaned)
                         saved = true
 
                     } label: {
@@ -746,7 +792,7 @@ private struct EditProfileScreen: View {
                     .font(.headline)
 
                     Text(
-                        "Your nickname, avatar and battle records are stored on this device. Guests may return to the opening screen. Registered accounts can log out."
+                        "Guest profiles stay on this device. For registered accounts, nicknames and built-in avatar choices sync with Firestore; personal photos remain on this device. Battle records sync separately."
                     )
                     .font(.subheadline)
                     .foregroundStyle(
@@ -786,6 +832,7 @@ private struct ChooseAvatarScreen: View {
     @Binding var choice: String
     @Binding var photo: UIImage?
     let avatarScope: String
+    let onChooseBuiltInAvatar: (String) -> Void
 
     @Environment(\.dismiss)
     private var dismiss
@@ -826,6 +873,7 @@ private struct ChooseAvatarScreen: View {
 
                         Button {
                             choice = asset
+                            onChooseBuiltInAvatar(asset)
                             dismiss()
 
                         } label: {

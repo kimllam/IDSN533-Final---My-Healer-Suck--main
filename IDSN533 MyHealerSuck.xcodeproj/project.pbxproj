@@ -25,6 +25,8 @@
 		AE8A441630AA4B750054775D /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A441530AA4B680054775D /* AuthView.swift */; };
 		AE8A444330AA51410054775D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AE8A444230AA51410054775D /* FirebaseAuth */; };
 		AE8A444530AA52700054775D /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A444430AA526D0054775D /* AuthManager.swift */; };
+		AEAB4DD130B1047C0054ECF8 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB4DD030B1047C0054ECF8 /* FirebaseFirestore */; };
+		AEAB4DD330B10DC20054ECF8 /* CloudPlayerProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEAB4DD230B10DBD0054ECF8 /* CloudPlayerProfileStore.swift */; };
 		EC393A7530AB6CD600C8514A /* kiravale-medieval-music-593694.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = EC393A7430AB6CD400C8514A /* kiravale-medieval-music-593694.mp3 */; };
 /* End PBXBuildFile section */
 
@@ -47,6 +49,7 @@
 		AE8A441330AA4AB00054775D /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		AE8A441530AA4B680054775D /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		AE8A444430AA526D0054775D /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		AEAB4DD230B10DBD0054ECF8 /* CloudPlayerProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudPlayerProfileStore.swift; sourceTree = "<group>"; };
 		EC393A7430AB6CD400C8514A /* kiravale-medieval-music-593694.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "kiravale-medieval-music-593694.mp3"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -64,6 +67,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AE8A444330AA51410054775D /* FirebaseAuth in Frameworks */,
+				AEAB4DD130B1047C0054ECF8 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +82,7 @@
 				A6F6E44430A56F6900C0CB1D /* IDSN533 MyHealerSuck */,
 				A6F6E44330A56F6900C0CB1D /* Products */,
 				EC393A7430AB6CD400C8514A /* kiravale-medieval-music-593694.mp3 */,
+				AEAB4DCF30B1047C0054ECF8 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -92,6 +97,7 @@
 		A6F6E45030A56F9C00C0CB1D /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				AEAB4DD230B10DBD0054ECF8 /* CloudPlayerProfileStore.swift */,
 				AE8A444430AA526D0054775D /* AuthManager.swift */,
 				AE8A441130AA3FF60054775D /* AudioManager.swift */,
 				AE8A440F30AA3E880054775D /* GameRecordStore.swift */,
@@ -120,6 +126,13 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		AEAB4DCF30B1047C0054ECF8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -141,6 +154,7 @@
 			name = "IDSN533 MyHealerSuck";
 			packageProductDependencies = (
 				AE8A444230AA51410054775D /* FirebaseAuth */,
+				AEAB4DD030B1047C0054ECF8 /* FirebaseFirestore */,
 			);
 			productName = "IDSN533 MyHealerSuck";
 			productReference = A6F6E44230A56F6900C0CB1D /* IDSN533 MyHealerSuck.app */;
@@ -204,6 +218,7 @@
 				A6F6E46230A5716500C0CB1D /* EncounterResolutionView.swift in Sources */,
 				AE8A441430AA4AB50054775D /* WelcomeView.swift in Sources */,
 				AE8A441230AA3FFA0054775D /* AudioManager.swift in Sources */,
+				AEAB4DD330B10DC20054ECF8 /* CloudPlayerProfileStore.swift in Sources */,
 				A6F6E45D30A5714F00C0CB1D /* TeammateStates.swift in Sources */,
 				A6F6E45E30A5715200C0CB1D /* IdiotStrategist.swift in Sources */,
 				A6F6E46130A5715F00C0CB1D /* GameBoardView.swift in Sources */,
@@ -448,6 +463,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AE8A444130AA51410054775D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
+		};
+		AEAB4DD030B1047C0054ECF8 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AE8A444130AA51410054775D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
