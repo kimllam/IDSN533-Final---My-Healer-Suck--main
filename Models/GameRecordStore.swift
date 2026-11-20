@@ -28,18 +28,46 @@ final class GameRecordStore: ObservableObject {
     // Each registered account has isolated local battle records.
     // Guest gameplay never reads or creates a record.
     private var loadedUserID: String?
+    private var loadedAsAccount = false
+
+    // A battle keeps the identity that was selected when it started.
+    private var activeBattleUID: String?
+    private var activeBattleIsGuest = true
 
     private init() {}
+
+    private func currentAccountUID() -> String? {
+        guard UserDefaults.standard.string(forKey: "entryMode") == "account",
+              let user = Auth.auth().currentUser,
+              user.isEmailVerified else {
+            return nil
+        }
+        return user.uid
+    }
+
+    func beginBattleSession() {
+        activeBattleUID = currentAccountUID()
+        activeBattleIsGuest = activeBattleUID == nil
+        refreshForCurrentAccount()
+    }
+
+    func endBattleSession() {
+        activeBattleUID = nil
+        activeBattleIsGuest = true
+    }
 
     private func storageKey(for userID: String) -> String {
         "myHealerSucks.completedBattles.account.\(userID).v1"
     }
 
     func refreshForCurrentAccount() {
-        let uid = Auth.auth().currentUser?.uid
-        guard uid != loadedUserID else { return }
+        let uid = currentAccountUID()
+        let isAccount = uid != nil
+        guard uid != loadedUserID || isAccount != loadedAsAccount else { return }
         loadedUserID = uid
+        loadedAsAccount = isAccount
         guard let uid else {
+            // A guest must never read cached records from a signed-in Firebase user.
             battles = []
             return
         }
@@ -67,9 +95,9 @@ final class GameRecordStore: ObservableObject {
         survivingIdiots: Int
     ) {
         // Do not save guest wins or losses as account achievements.
-        guard UserDefaults.standard.string(forKey: "entryMode") == "account",
-              let user = Auth.auth().currentUser,
-              user.isEmailVerified else { return }
+        guard !activeBattleIsGuest,
+              let battleUID = activeBattleUID,
+              currentAccountUID() == battleUID else { return }
         refreshForCurrentAccount()
         let result = SavedBattle(
             id: UUID(),
@@ -107,7 +135,9 @@ final class GameRecordStore: ObservableObject {
         guard let data = try? JSONEncoder().encode(battles)
         else { return }
 
-        guard let uid = loadedUserID else { return }
+        guard let uid = activeBattleUID,
+              loadedUserID == uid,
+              currentAccountUID() == uid else { return }
         UserDefaults.standard.set(data, forKey: storageKey(for: uid))
     }
 }
@@ -159,5 +189,6 @@ enum BattleAchievement: String, CaseIterable, Identifiable {
         }
     }
 }
+
 
 

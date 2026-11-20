@@ -27,8 +27,11 @@ struct GameBoardView: View {
 
     // MARK: - Profile
 
-    @AppStorage("playerAvatarChoice")
-    private var avatarChoice = "healer card"
+    @State private var avatarChoice = "healer card"
+
+    private var avatarScope: String {
+        isRegisteredPlayer ? (auth.userID ?? "unknown") : "guest"
+    }
 
     @State private var customAvatar: UIImage?
     @State private var showProfile = false
@@ -36,8 +39,47 @@ struct GameBoardView: View {
     // MARK: - Pause Menu
 
     @State private var isPaused = false
+    @State private var showExitConfirmation = false
     @State private var showSettings = false
     @State private var showHowToPlay = false
+    @State private var showGuideOptions = false
+    @State private var pendingGuideAction: BattleGuideAction?
+
+    private enum BattleGuideAction {
+        case replayTutorial
+        case reference
+    }
+
+    @State private var showFirstTimeTutorial = false
+    @State private var showStoryIntro = false
+
+    // Guests see the story each time they enter; accounts see it once per UID.
+    private var storyIntroKey: String {
+        "hasSeenGameStory.v1.\(avatarScope)"
+    }
+
+    private var shouldShowStory: Bool {
+        !isRegisteredPlayer || !UserDefaults.standard.bool(forKey: storyIntroKey)
+    }
+    @State private var selectedCardHelp: HealerCard?
+    // The tutorial completion flag is isolated for each identity.
+    private var tutorialKey: String {
+        "hasCompletedBattleTutorial.v2.\(avatarScope)"
+    }
+    private var hasCompletedTutorial: Bool {
+        UserDefaults.standard.bool(forKey: tutorialKey)
+    }
+    @State private var knownAchievements: Set<BattleAchievement> = []
+    @State private var newAchievement: BattleAchievement?
+    @State private var pendingAchievements: [BattleAchievement] = []
+
+    // Preserve the counters before each new battle for result animation.
+    @State private var previousBattleCount = 0
+    @State private var previousVictoryCount = 0
+    @State private var previousDefeatCount = 0
+    @State private var recordUpdate: BattleRecordUpdate?
+    @State private var showBattleResults = false
+
 
     // MARK: - Colors
 
@@ -127,20 +169,22 @@ struct GameBoardView: View {
 
                             // MARK: - Game Over
 
-                            if game.isGameOver {
+                            if game.isGameOver && showBattleResults {
                                 GameOverOverlayView(
                                     didWin: game.didPlayerWin,
+                                    recordUpdate: recordUpdate,
                                     onContinue: {
                                         restartBattle()
-                                    },
-                                    onReturnHome: isRegisteredPlayer ? {
-                                        isPaused = false
-                                        game.inspectedTeammate = nil
-                                        game.resetGame()
-                                        appRoute.returnToLaunchScreen()
-                                    } : nil
+                                    }
                                 )
                                 .zIndex(10)
+                            }
+
+                            // MARK: - Achievement Notification
+                            if let achievement = newAchievement {
+                                achievementToast(achievement)
+                                    .zIndex(40)
+                                    .transition(.move(edge: .top).combined(with: .opacity))
                             }
 
                             // MARK: - Move Inspect Overlay
@@ -220,13 +264,105 @@ struct GameBoardView: View {
         // MARK: - How to Play Sheet
 
         .sheet(isPresented: $showHowToPlay) {
-            BattleHowToPlayView()
+            HowToPlaySheetView()
+        }
+        .sheet(isPresented: $showGuideOptions, onDismiss: {
+            // Open the selected destination after the choice sheet closes.
+            guard let action = pendingGuideAction else { return }
+            pendingGuideAction = nil
+            // Present the next sheet after the options sheet has fully closed.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                switch action {
+                case .replayTutorial:
+                    showFirstTimeTutorial = true
+                case .reference:
+                    showHowToPlay = true
+                }
+            }
+        }) {
+            BattleGuideOptionsView { action in
+                switch action {
+                case .tutorial: pendingGuideAction = .replayTutorial
+                case .cards: pendingGuideAction = .reference
+                }
+                showGuideOptions = false
+            }
+        }
+        .alert(
+            selectedCardHelp?.rawValue ?? "Card Guide",
+            isPresented: Binding(
+                get: { selectedCardHelp != nil },
+                set: { if !$0 { selectedCardHelp = nil } }
+            )
+        ) {
+            Button("Got It", role: .cancel) { selectedCardHelp = nil }
+            Button("Full Card Guide") {
+                selectedCardHelp = nil
+                showHowToPlay = true
+            }
+        } message: {
+            Text(cardHelpDescription(selectedCardHelp))
+        }
+        .fullScreenCover(isPresented: $showStoryIntro, onDismiss: {
+            // The account onboarding flag belongs only to the current UID.
+            if isRegisteredPlayer {
+                UserDefaults.standard.set(true, forKey: storyIntroKey)
+            }
+            // A story cover and a tutorial sheet cannot transition at once.
+            // Guests always get the tutorial after the story, even if an old
+            // shared UserDefaults flag says the tutorial was completed.
+            let needsTutorial = !isRegisteredPlayer || !hasCompletedTutorial
+            if needsTutorial {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+                    guard !showStoryIntro else { return }
+                    showFirstTimeTutorial = true
+                }
+            }
+        }) {
+            GameStoryIntroView()
+        }
+        .sheet(isPresented: $showFirstTimeTutorial) {
+            GameTutorialView {
+                // Record completion only after the final training step.
+                // Guests never write completion into an account's storage.
+                if isRegisteredPlayer {
+                    UserDefaults.standard.set(true, forKey: tutorialKey)
+                }
+            }
+        }
+
+        // MARK: - Exit Confirmation
+
+        .alert("Exit to Main Menu?", isPresented: $showExitConfirmation) {
+            Button("Keep Playing", role: .cancel) {}
+            Button("Exit Battle", role: .destructive) {
+                exitBattleToMainMenu()
+            }
+        } message: {
+            Text("Your current unfinished battle will be discarded. Your account and previously saved results will stay intact.")
         }
 
         // MARK: - Lifecycle
 
         .onAppear {
+            GameRecordStore.shared.beginBattleSession()
+            GameRecordStore.shared.refreshForCurrentAccount()
+            captureStartingRecordCounts()
             loadAvatar()
+            if isRegisteredPlayer {
+                GameRecordStore.shared.refreshForCurrentAccount()
+                knownAchievements = Set(BattleAchievement.allCases.filter {
+                    GameRecordStore.shared.isUnlocked($0)
+                })
+            } else {
+                knownAchievements = []
+            }
+            if shouldShowStory {
+                showStoryIntro = true
+            } else if !isRegisteredPlayer || !hasCompletedTutorial {
+                // Guests always receive onboarding when entering the game.
+                showFirstTimeTutorial = true
+            }
         }
 
         .onChange(of: avatarChoice) { _, _ in
@@ -234,10 +370,161 @@ struct GameBoardView: View {
         }
 
         .onChange(of: game.isGameOver) { _, ended in
-            if ended {
-                isPaused = false
+            guard ended else { return }
+            isPaused = false
+            showBattleResults = false
+
+            // GameManager records the result immediately after setting isGameOver.
+            // The next main-actor turn sees the completed persistence operation.
+            Task { @MainActor in
+                guard game.isGameOver else { return }
+                GameRecordStore.shared.refreshForCurrentAccount()
+
+                if isRegisteredPlayer {
+                    let store = GameRecordStore.shared
+                    let latestCount = store.gamesPlayed
+                    let latestVictories = store.victories
+                    let latestDefeats = store.defeats
+
+                    // Show an account counter animation only after a new saved record.
+                    if latestCount > previousBattleCount {
+                        recordUpdate = BattleRecordUpdate(
+                            beforeGames: previousBattleCount,
+                            afterGames: latestCount,
+                            beforeVictories: previousVictoryCount,
+                            afterVictories: latestVictories,
+                            beforeDefeats: previousDefeatCount,
+                            afterDefeats: latestDefeats
+                        )
+                    } else {
+                        recordUpdate = nil
+                    }
+
+                    let unlocked = BattleAchievement.allCases.filter {
+                        store.isUnlocked($0) && !knownAchievements.contains($0)
+                    }
+                    knownAchievements.formUnion(unlocked)
+                    pendingAchievements = unlocked
+                    if unlocked.isEmpty {
+                        showBattleResults = true
+                    } else {
+                        showNextAchievement()
+                    }
+                } else {
+                    // A guest has no account totals or achievement animations.
+                    recordUpdate = nil
+                    pendingAchievements.removeAll()
+                    showBattleResults = true
+                }
             }
         }
+    }
+
+    // MARK: - Achievement Toast
+
+    private func achievementToast(_ achievement: BattleAchievement) -> some View {
+        ZStack {
+            Color.black.opacity(0.64)
+                .ignoresSafeArea()
+
+            GeometryReader { geometry in
+                let compact = geometry.size.height < 420
+
+                VStack(spacing: compact ? 8 : 13) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.yellow.opacity(0.22))
+                            .frame(width: compact ? 94 : 130, height: compact ? 94 : 130)
+                            .blur(radius: 15)
+                        Image(systemName: "sparkles")
+                            .font(.system(size: compact ? 76 : 110))
+                            .foregroundStyle(Color.orange.opacity(0.55))
+                            .symbolEffect(.pulse, options: .repeating)
+                        Image(systemName: achievement.icon)
+                            .font(.system(size: compact ? 37 : 48, weight: .bold))
+                            .foregroundStyle(Color(red: 0.55, green: 0.32, blue: 0.12))
+                            .padding(compact ? 17 : 22)
+                            .background(lightTan, in: Circle())
+                            .overlay(Circle().stroke(darkBrown, lineWidth: 2))
+                            .symbolEffect(.bounce, options: .nonRepeating)
+                    }
+
+                    Text("ACHIEVEMENT UNLOCKED!")
+                        .font(.system(size: compact ? 12 : 15, weight: .black, design: .rounded))
+                        .tracking(2)
+                    Text(achievement.title)
+                        .font(.system(size: compact ? 24 : 30, weight: .black, design: .serif))
+                    Text(achievement.detail)
+                        .font(.system(size: compact ? 12 : 14, design: .serif))
+                        .multilineTextAlignment(.center)
+                    Button {
+                        withAnimation(.spring(response: 0.36)) {
+                            newAchievement = nil
+                        }
+                        if pendingAchievements.isEmpty {
+                            showBattleResults = true
+                        } else {
+                            showNextAchievement()
+                        }
+                    } label: {
+                        Text(pendingAchievements.isEmpty ? "View Battle Results" : "Next Achievement")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: compact ? 36 : 43)
+                            .background(darkBrown, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .foregroundStyle(darkBrown)
+                .padding(.horizontal, compact ? 25 : 32)
+                .padding(.vertical, compact ? 13 : 23)
+                .frame(maxWidth: 440)
+                .background(paper, in: RoundedRectangle(cornerRadius: 24))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(darkBrown, lineWidth: 2)
+                }
+                .shadow(color: .black.opacity(0.25), radius: 18, y: 7)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .transition(.opacity.combined(with: .scale(scale: 0.85)))
+        .zIndex(40)
+    }
+
+    private func captureStartingRecordCounts() {
+        let store = GameRecordStore.shared
+        if isRegisteredPlayer {
+            previousBattleCount = store.gamesPlayed
+            previousVictoryCount = store.victories
+            previousDefeatCount = store.defeats
+        } else {
+            previousBattleCount = 0
+            previousVictoryCount = 0
+            previousDefeatCount = 0
+        }
+        recordUpdate = nil
+        showBattleResults = false
+    }
+
+    private func showNextAchievement() {
+        guard newAchievement == nil, !pendingAchievements.isEmpty else { return }
+        withAnimation {
+            newAchievement = pendingAchievements.removeFirst()
+        }
+    }
+
+    // MARK: - Exit Battle
+
+    private func exitBattleToMainMenu() {
+        isPaused = false
+        showExitConfirmation = false
+        game.inspectedTeammate = nil
+        GameRecordStore.shared.endBattleSession()
+        game.resetGame()
+        // Keep entryMode unchanged so guest/account identity is preserved.
+        appRoute.returnToLaunchScreen()
     }
 
     // MARK: - Restart Battle
@@ -246,9 +533,31 @@ struct GameBoardView: View {
     // It does not dismiss the view or reset the app navigation.
 
     private func restartBattle() {
+        newAchievement = nil
+        pendingAchievements = []
+        recordUpdate = nil
+        showBattleResults = false
         isPaused = false
         game.inspectedTeammate = nil
+        GameRecordStore.shared.endBattleSession()
         game.resetGame()
+        GameRecordStore.shared.beginBattleSession()
+        GameRecordStore.shared.refreshForCurrentAccount()
+        captureStartingRecordCounts()
+    }
+
+    // MARK: - Healer Card Descriptions
+
+    private func cardHelpDescription(_ card: HealerCard?) -> String {
+        guard let card else { return "Long press a card for details, or drag it onto a teammate to play." }
+        switch card {
+        case .heal:
+            return "Heal (+1 HP): Restore one health point to the teammate who receives this card. Drag the card onto a teammate to assign it."
+        case .reverse:
+            return "Reverse: Redirect incoming damage according to the game's Reverse rules. Drag the card to assign it."
+        case .doNothing:
+            return "Do Nothing: Assign no healing or damage redirection for this action. Drag the card to a teammate to choose this option."
+        }
     }
 
     // MARK: - Top Bar
@@ -285,6 +594,12 @@ struct GameBoardView: View {
                         .stroke(darkBrown, lineWidth: 1.5)
                 }
 
+                Text("Hold a card (0.5s) or tap its ? for details")
+                    .font(.system(size: compact ? 10 : 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(darkBrown)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+
                 Spacer(minLength: 4)
 
                 // MARK: - Player Profile
@@ -297,6 +612,20 @@ struct GameBoardView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Player Profile")
+
+                // MARK: - Quick Help Button
+                Button {
+                    showGuideOptions = true
+                } label: {
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(darkBrown)
+                        .frame(width: 44, height: 44)
+                        .background(lightTan, in: Circle())
+                        .overlay { Circle().stroke(darkBrown, lineWidth: 1.5) }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("How to Play and Card Guide")
 
                 // MARK: - Pause Button
 
@@ -679,20 +1008,35 @@ private func healerHand(
                                         .resizable()
                                         .scaledToFit()
                                         .frame(height: cardHeight)
-                                        .shadow(
-                                            color: .black.opacity(0.22),
-                                            radius: 4,
-                                            y: 2
-                                        )
+                                        .shadow(color: .black.opacity(0.22), radius: 4, y: 2)
                                         .opacity(game.pendingThefts.contains { $0.card == card } ? 0 : 1)
                                         .anchorPreference(key: TheftAnchors.self, value: .bounds) {
                                             [.hand(card): $0]
                                         }
                                         .id(card)
                                         .draggable(card.rawValue)
-                                        .accessibilityLabel(
-                                            card.rawValue
+                                        .simultaneousGesture(
+                                            LongPressGesture(minimumDuration: 0.5)
+                                                .onEnded { _ in
+                                                    selectedCardHelp = card
+                                                }
                                         )
+                                        .overlay(alignment: .topTrailing) {
+                                            // A tappable fallback is reliable when iOS drag competes with long press.
+                                            Button {
+                                                selectedCardHelp = card
+                                            } label: {
+                                                Image(systemName: "questionmark.circle.fill")
+                                                    .font(.system(size: 19, weight: .bold))
+                                                    .foregroundStyle(darkBrown)
+                                                    .background(paper, in: Circle())
+                                            }
+                                            .buttonStyle(.plain)
+                                            .padding(2)
+                                            .accessibilityLabel("Explain \(card.rawValue) card")
+                                        }
+                                        .accessibilityLabel(card.rawValue)
+                                        .accessibilityHint("Hold or tap question mark for details. Drag onto a teammate to play.")
                                 }
                             }
                             .frame(
@@ -871,6 +1215,14 @@ private func healerHand(
                             showHowToPlay = true
                         }
 
+                        pauseMenuButton(
+                            "Exit to Main Menu",
+                            icon: "house.fill",
+                            compact: compact
+                        ) {
+                            showExitConfirmation = true
+                        }
+
                     }
                     .foregroundStyle(darkBrown)
                     .padding(compact ? 15 : 22)
@@ -1032,25 +1384,10 @@ private func healerHand(
     // MARK: - Load Saved Avatar
 
     private func loadAvatar() {
-
-        guard let directory = FileManager.default.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        ).first else {
-            customAvatar = nil
-            return
-        }
-
-        let avatarURL = directory
-            .appendingPathComponent(
-                "PlayerProfile",
-                isDirectory: true
-            )
-            .appendingPathComponent("avatar.jpg")
-
-        customAvatar = UIImage(
-            contentsOfFile: avatarURL.path
-        )
+        avatarChoice = UserDefaults.standard.string(
+            forKey: "playerAvatarChoice.\(avatarScope)"
+        ) ?? "healer card"
+        customAvatar = AvatarFile.load(for: avatarScope)
     }
 }
 
@@ -1415,13 +1752,27 @@ private struct BattleHowToPlayView: View {
 
 // MARK: - Game Over Overlay
 
-// Displays one Continue button for both victory and defeat.
+// Account totals animate separately from first-time achievement rewards.
+struct BattleRecordUpdate: Equatable {
+    let beforeGames: Int
+    let afterGames: Int
+    let beforeVictories: Int
+    let afterVictories: Int
+    let beforeDefeats: Int
+    let afterDefeats: Int
+}
 
+// Displays only Play Again for both victory and defeat.
 struct GameOverOverlayView: View {
 
     let didWin: Bool
+    let recordUpdate: BattleRecordUpdate?
     let onContinue: () -> Void
-    let onReturnHome: (() -> Void)?
+
+    @State private var shownGames = 0
+    @State private var shownVictories = 0
+    @State private var shownDefeats = 0
+
 
     private let darkBrown = Color(
         red: 0.35,
@@ -1452,6 +1803,20 @@ struct GameOverOverlayView: View {
         green: 0.16,
         blue: 0.13
     )
+
+    private func recordStat(_ title: String, value: Int) -> some View {
+        VStack(spacing: 3) {
+            Text("\(value)")
+                .font(.system(size: 23, weight: .black, design: .rounded))
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .foregroundStyle(darkBrown)
+            Text(title)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(darkBrown.opacity(0.75))
+        }
+        .frame(maxWidth: .infinity)
+    }
 
     var body: some View {
 
@@ -1536,13 +1901,54 @@ struct GameOverOverlayView: View {
                         )
                         .padding(.horizontal, 8)
 
+                        // MARK: - Saved Account Record
+
+                        if let recordUpdate {
+                            VStack(spacing: compact ? 6 : 10) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(victoryGreen)
+                                    Text("BATTLE RECORD UPDATED")
+                                        .font(.system(size: compact ? 10 : 12, weight: .black, design: .rounded))
+                                        .tracking(1.1)
+                                }
+
+                                HStack(spacing: 8) {
+                                    recordStat("Battles", value: shownGames)
+                                    recordStat("Wins", value: shownVictories)
+                                    recordStat("Losses", value: shownDefeats)
+                                }
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("Updated totals: \(recordUpdate.afterGames) battles, \(recordUpdate.afterVictories) wins, \(recordUpdate.afterDefeats) losses")
+                            }
+                            .padding(compact ? 9 : 12)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                Color(red: 0.98, green: 0.89, blue: 0.78),
+                                in: RoundedRectangle(cornerRadius: 13)
+                            )
+                            .task(id: recordUpdate) {
+                                shownGames = recordUpdate.beforeGames
+                                shownVictories = recordUpdate.beforeVictories
+                                shownDefeats = recordUpdate.beforeDefeats
+
+                                try? await Task.sleep(for: .milliseconds(180))
+                                guard !Task.isCancelled else { return }
+                                withAnimation(.easeOut(duration: 0.8)) {
+                                    shownGames = recordUpdate.afterGames
+                                    shownVictories = recordUpdate.afterVictories
+                                    shownDefeats = recordUpdate.afterDefeats
+                                }
+                            }
+                        }
+
                         // MARK: - Continue Button
 
                         Button(action: onContinue) {
 
                             HStack(spacing: 10) {
 
-                                Text("Continue")
+                                Text("Play Again")
 
                                 Image(
                                     systemName: "arrow.right"
@@ -1561,29 +1967,11 @@ struct GameOverOverlayView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(
-                            "Continue to battle setup"
+                            "Start another battle"
                         )
                         .padding(.top, 4)
 
-                        // Registered players can return to the original Play screen.
-                        if let onReturnHome {
-                            Button(action: onReturnHome) {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "house.fill")
-                                    Text("Return to Home")
-                                }
-                                .font(.headline.bold())
-                                .foregroundStyle(darkBrown)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: compact ? 42 : 48)
-                                .background(paper, in: Capsule())
-                                .overlay {
-                                    Capsule()
-                                        .stroke(darkBrown, lineWidth: 2)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                        }
+
                     }
                     .padding(
                         compact ? 18 : 26
@@ -1692,4 +2080,5 @@ private struct BoardGhostFlight: View {
         }
     }
 }
+
 

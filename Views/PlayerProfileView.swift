@@ -35,8 +35,8 @@ private enum ProfileStyle {
 
 // MARK: - Local Image Handling
 
-private enum AvatarFile {
-    static var url: URL? {
+enum AvatarFile {
+    static func url(for scope: String) -> URL? {
         FileManager.default.urls(
             for: .applicationSupportDirectory,
             in: .userDomainMask
@@ -45,16 +45,16 @@ private enum AvatarFile {
                 "PlayerProfile",
                 isDirectory: true
             )
-            .appendingPathComponent("avatar.jpg")
+            .appendingPathComponent("avatar_\(scope).jpg")
     }
 
-    static func load() -> UIImage? {
-        guard let url else { return nil }
+    static func load(for scope: String) -> UIImage? {
+        guard let url = url(for: scope) else { return nil }
         return UIImage(contentsOfFile: url.path)
     }
 
-    static func save(_ image: UIImage) throws {
-        guard let url else {
+    static func save(_ image: UIImage, for scope: String) throws {
+        guard let url = url(for: scope) else {
             throw CocoaError(.fileNoSuchFile)
         }
 
@@ -202,7 +202,7 @@ struct PlayerProfileView: View {
 
     // Guest and registered account have different exit semantics.
     private var isGuest: Bool {
-        entryMode == "guest" || !auth.isLoggedIn
+        entryMode != "account" || !auth.isLoggedIn || !auth.isEmailVerified
     }
 
     // Keep guest and registered account nicknames separate.
@@ -216,28 +216,29 @@ struct PlayerProfileView: View {
     }
 
     private func loadNickname() {
-        let defaults = UserDefaults.standard
-        let key = nicknameStorageKey
-
-        // Import the previous shared nickname for only one account.
-        // Never import an account nickname into the guest profile.
-        if !isGuest, let uid = auth.userID {
-            let migrationOwnerKey = "playerNickname.legacyOwnerUID"
-            if defaults.string(forKey: migrationOwnerKey) == nil,
-               let legacy = defaults.string(forKey: "playerNickname"),
-               !legacy.isEmpty {
-                defaults.set(uid, forKey: migrationOwnerKey)
-                if defaults.object(forKey: key) == nil {
-                    defaults.set(legacy, forKey: key)
-                }
-            }
-        }
-
-        nickname = defaults.string(forKey: key) ?? ""
+        // Do not migrate the old shared nickname into an account.
+        nickname = UserDefaults.standard.string(
+            forKey: nicknameStorageKey
+        ) ?? ""
     }
 
-    @AppStorage("playerAvatarChoice")
-    private var avatarChoice = "healer card"
+    @State private var avatarChoice = "healer card"
+
+    private var avatarScope: String {
+        isGuest ? "guest" : (auth.userID ?? "unknown")
+    }
+
+    private var avatarChoiceKey: String {
+        "playerAvatarChoice.\(avatarScope)"
+    }
+
+    private func loadAvatarSettings() {
+        // Read only the current identity's avatar and picture.
+        avatarChoice = UserDefaults.standard.string(
+            forKey: avatarChoiceKey
+        ) ?? "healer card"
+        avatarPhoto = AvatarFile.load(for: avatarScope)
+    }
 
     @Environment(\.dismiss)
     private var dismiss
@@ -296,7 +297,8 @@ struct PlayerProfileView: View {
                                 EditProfileScreen(
                                     nickname: $nickname,
                                     avatarChoice: $avatarChoice,
-                                    avatarPhoto: $avatarPhoto
+                                    avatarPhoto: $avatarPhoto,
+                                    avatarScope: avatarScope
                                 )
                             } label: {
                                 HStack(spacing: 14) {
@@ -363,9 +365,11 @@ struct PlayerProfileView: View {
                                 Button {
                                     // Guests can open the existing account selection screen.
                                     // No Firebase sign-out is performed.
+                                    GameRecordStore.shared.endBattleSession()
                                     game.inspectedTeammate = nil
                                     game.resetGame()
                                     entryMode = ""
+                                    GameRecordStore.shared.refreshForCurrentAccount()
                                     appRoute.returnToAccountSelection()
                                 } label: {
                                     PaperRow(
@@ -445,20 +449,25 @@ struct PlayerProfileView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
             .onAppear {
-                avatarPhoto = AvatarFile.load()
+                loadAvatarSettings()
                 loadNickname()
                 if !isGuest {
                     records.refreshForCurrentAccount()
                 }
+            }
+            .onChange(of: avatarChoice) { _, value in
+                UserDefaults.standard.set(value, forKey: avatarChoiceKey)
             }
             .onChange(of: nickname) { _, value in
                 UserDefaults.standard.set(value, forKey: nicknameStorageKey)
             }
             .onChange(of: entryMode) { _, _ in
                 loadNickname()
+                loadAvatarSettings()
             }
             .onChange(of: auth.userID) { _, _ in
                 loadNickname()
+                loadAvatarSettings()
             }
         }
         .tint(ProfileStyle.brown)
@@ -488,12 +497,14 @@ struct PlayerProfileView: View {
 
     private func exitToLaunchScreen() {
         do {
+            GameRecordStore.shared.endBattleSession()
             // Only account holders who selected account mode are signed out.
             if !isGuest {
                 try auth.logOut()
             }
 
             entryMode = ""
+            GameRecordStore.shared.refreshForCurrentAccount()
             game.inspectedTeammate = nil
             game.resetGame()
             appRoute.returnToLaunchScreen()
@@ -586,6 +597,7 @@ private struct EditProfileScreen: View {
     @Binding var nickname: String
     @Binding var avatarChoice: String
     @Binding var avatarPhoto: UIImage?
+    let avatarScope: String
 
     @State private var draft = ""
     @State private var saved = false
@@ -614,7 +626,8 @@ private struct EditProfileScreen: View {
                 NavigationLink {
                     ChooseAvatarScreen(
                         choice: $avatarChoice,
-                        photo: $avatarPhoto
+                        photo: $avatarPhoto,
+                        avatarScope: avatarScope
                     )
                 } label: {
                     VStack(spacing: 8) {
@@ -772,6 +785,7 @@ private struct EditProfileScreen: View {
 private struct ChooseAvatarScreen: View {
     @Binding var choice: String
     @Binding var photo: UIImage?
+    let avatarScope: String
 
     @Environment(\.dismiss)
     private var dismiss
@@ -928,9 +942,9 @@ private struct ChooseAvatarScreen: View {
                 return
             }
 
-            try AvatarFile.save(image)
+            try AvatarFile.save(image, for: avatarScope)
 
-            photo = AvatarFile.load()
+            photo = AvatarFile.load(for: avatarScope)
             choice = "photo"
             selectedPhoto = nil
             dismiss()
@@ -1237,5 +1251,6 @@ private struct BattleAchievementsScreen: View {
         .environmentObject(AuthManager())
         .environmentObject(AppRouteState())
 }
+
 
 

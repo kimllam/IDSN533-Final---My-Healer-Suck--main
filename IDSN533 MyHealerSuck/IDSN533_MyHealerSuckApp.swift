@@ -12,6 +12,26 @@ import Combine
 import FirebaseCore
 import UIKit
 
+// MARK: - Landscape Orientation
+
+@MainActor
+enum LandscapeOrientation {
+    static func request() {
+        for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+            guard scene.activationState == .foregroundActive ||
+                  scene.activationState == .foregroundInactive else { continue }
+
+            scene.keyWindow?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+            scene.requestGeometryUpdate(
+                .iOS(interfaceOrientations: .landscape)
+            ) { error in
+                // Rotation is controlled by iOS and may be deferred in the Simulator.
+                print("Landscape orientation request: \(error.localizedDescription)")
+            }
+        }
+    }
+}
+
 // MARK: - Firebase App Delegate
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
@@ -26,6 +46,14 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         }
 
         return true
+    }
+
+    // Keep all app screens in landscape, including onboarding.
+    func application(
+        _ application: UIApplication,
+        supportedInterfaceOrientationsFor window: UIWindow?
+    ) -> UIInterfaceOrientationMask {
+        .landscape
     }
 }
 
@@ -98,6 +126,9 @@ struct MyHealerSucksApp: App {
 
             // Shared authentication state
             .environmentObject(authManager)
+            .onAppear {
+                LandscapeOrientation.request()
+            }
             .onChange(
                 of: scenePhase,
                 initial: true
@@ -105,9 +136,13 @@ struct MyHealerSucksApp: App {
                 AudioManager.shared.setApplicationActive(
                     phase == .active
                 )
+                if phase == .active {
+                    LandscapeOrientation.request()
+                }
             }
         }
     }
 }
+
 
 
