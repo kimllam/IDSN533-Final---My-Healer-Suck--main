@@ -53,13 +53,14 @@ struct GameBoardView: View {
     @State private var showFirstTimeTutorial = false
     @State private var showStoryIntro = false
 
-    // Guests see the story each time they enter; accounts see it once per UID.
+    // Guests retain automatic story onboarding.
+    // Registered accounts enter gameplay without automatic onboarding.
     private var storyIntroKey: String {
         "hasSeenGameStory.v1.\(avatarScope)"
     }
 
     private var shouldShowStory: Bool {
-        !isRegisteredPlayer || !UserDefaults.standard.bool(forKey: storyIntroKey)
+        !isRegisteredPlayer
     }
     @State private var selectedCardHelp: HealerCard?
     // The tutorial completion flag is isolated for each identity.
@@ -311,7 +312,7 @@ struct GameBoardView: View {
             // A story cover and a tutorial sheet cannot transition at once.
             // Guests always get the tutorial after the story, even if an old
             // shared UserDefaults flag says the tutorial was completed.
-            let needsTutorial = !isRegisteredPlayer || !hasCompletedTutorial
+            let needsTutorial = !isRegisteredPlayer
             if needsTutorial {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
                     guard !showStoryIntro else { return }
@@ -357,11 +358,14 @@ struct GameBoardView: View {
             } else {
                 knownAchievements = []
             }
-            if shouldShowStory {
+            if isRegisteredPlayer {
+                // Skip automatic onboarding when a registered account enters.
+                // Manual tutorials remain available through the help menu.
+                showStoryIntro = false
+                showFirstTimeTutorial = false
+            } else if shouldShowStory {
+                // Preserve the guest story and tutorial flow.
                 showStoryIntro = true
-            } else if !isRegisteredPlayer || !hasCompletedTutorial {
-                // Guests always receive onboarding when entering the game.
-                showFirstTimeTutorial = true
             }
         }
 
@@ -2080,5 +2084,6 @@ private struct BoardGhostFlight: View {
         }
     }
 }
+
 
 
