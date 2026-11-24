@@ -27,6 +27,31 @@
 		AE8A444530AA52700054775D /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A444430AA526D0054775D /* AuthManager.swift */; };
 		AEAB4DD130B1047C0054ECF8 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB4DD030B1047C0054ECF8 /* FirebaseFirestore */; };
 		AEAB4DD330B10DC20054ECF8 /* CloudPlayerProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEAB4DD230B10DBD0054ECF8 /* CloudPlayerProfileStore.swift */; };
+		AEDD5F6930B53B8500184D38 /* heal.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5D30B5399900184D38 /* heal.wav */; };
+		AEDD5F6A30B53BA500184D38 /* cave_ambient.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5730B5399900184D38 /* cave_ambient.wav */; };
+		AEDD5F6B30B53BA500184D38 /* defeat.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5930B5399900184D38 /* defeat.wav */; };
+		AEDD5F6C30B53BA500184D38 /* damage.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5830B5399900184D38 /* damage.wav */; };
+		AEDD5F6D30B53BA500184D38 /* ghost_appear.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5A30B5399900184D38 /* ghost_appear.wav */; };
+		AEDD5F6E30B53BA500184D38 /* card_return.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5630B5399900184D38 /* card_return.wav */; };
+		AEDD5F6F30B53BA500184D38 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F6830B5399900184D38 /* victory.wav */; };
+		AEDD5F7030B53BA500184D38 /* card_invalid.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5330B5399900184D38 /* card_invalid.wav */; };
+		AEDD5F7130B53BA500184D38 /* reverse.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F6130B5399900184D38 /* reverse.wav */; };
+		AEDD5F7230B53BA500184D38 /* bonk_growl.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5130B5399900184D38 /* bonk_growl.wav */; };
+		AEDD5F7330B53BA500184D38 /* round_start.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F6330B5399900184D38 /* round_start.wav */; };
+		AEDD5F7430B53BA500184D38 /* low_hp_warning.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5F30B5399900184D38 /* low_hp_warning.wav */; };
+		AEDD5F7530B53BA500184D38 /* ui_confirm.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F6730B5399900184D38 /* ui_confirm.wav */; };
+		AEDD5F7630B53BA500184D38 /* achievement.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5030B5399900184D38 /* achievement.wav */; };
+		AEDD5F7730B53BA500184D38 /* tavern_ambient.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F6430B5399900184D38 /* tavern_ambient.wav */; };
+		AEDD5F7830B53BA500184D38 /* ui_back.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F6530B5399900184D38 /* ui_back.wav */; };
+		AEDD5F7930B53BA500184D38 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F6030B5399900184D38 /* README.txt */; };
+		AEDD5F7A30B53BA500184D38 /* bonk_hit.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5230B5399900184D38 /* bonk_hit.wav */; };
+		AEDD5F7B30B53BA500184D38 /* card_place.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5530B5399900184D38 /* card_place.wav */; };
+		AEDD5F7C30B53BA500184D38 /* round_end.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F6230B5399900184D38 /* round_end.wav */; };
+		AEDD5F7D30B53BA500184D38 /* ui_click.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F6630B5399900184D38 /* ui_click.wav */; };
+		AEDD5F7E30B53BA500184D38 /* ghost_steal.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5C30B5399900184D38 /* ghost_steal.wav */; };
+		AEDD5F7F30B53BA500184D38 /* card_pickup.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5430B5399900184D38 /* card_pickup.wav */; };
+		AEDD5F8030B53BA500184D38 /* ghost_laugh.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5B30B5399900184D38 /* ghost_laugh.wav */; };
+		AEDD5F8130B53BA500184D38 /* idiot_mistake.wav in Resources */ = {isa = PBXBuildFile; fileRef = AEDD5F5E30B5399900184D38 /* idiot_mistake.wav */; };
 		EC393A7530AB6CD600C8514A /* kiravale-medieval-music-593694.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = EC393A7430AB6CD400C8514A /* kiravale-medieval-music-593694.mp3 */; };
 /* End PBXBuildFile section */
 
@@ -50,6 +75,31 @@
 		AE8A441530AA4B680054775D /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		AE8A444430AA526D0054775D /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		AEAB4DD230B10DBD0054ECF8 /* CloudPlayerProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudPlayerProfileStore.swift; sourceTree = "<group>"; };
+		AEDD5F5030B5399900184D38 /* achievement.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = achievement.wav; sourceTree = "<group>"; };
+		AEDD5F5130B5399900184D38 /* bonk_growl.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = bonk_growl.wav; sourceTree = "<group>"; };
+		AEDD5F5230B5399900184D38 /* bonk_hit.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = bonk_hit.wav; sourceTree = "<group>"; };
+		AEDD5F5330B5399900184D38 /* card_invalid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = card_invalid.wav; sourceTree = "<group>"; };
+		AEDD5F5430B5399900184D38 /* card_pickup.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = card_pickup.wav; sourceTree = "<group>"; };
+		AEDD5F5530B5399900184D38 /* card_place.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = card_place.wav; sourceTree = "<group>"; };
+		AEDD5F5630B5399900184D38 /* card_return.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = card_return.wav; sourceTree = "<group>"; };
+		AEDD5F5730B5399900184D38 /* cave_ambient.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = cave_ambient.wav; sourceTree = "<group>"; };
+		AEDD5F5830B5399900184D38 /* damage.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = damage.wav; sourceTree = "<group>"; };
+		AEDD5F5930B5399900184D38 /* defeat.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = defeat.wav; sourceTree = "<group>"; };
+		AEDD5F5A30B5399900184D38 /* ghost_appear.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ghost_appear.wav; sourceTree = "<group>"; };
+		AEDD5F5B30B5399900184D38 /* ghost_laugh.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ghost_laugh.wav; sourceTree = "<group>"; };
+		AEDD5F5C30B5399900184D38 /* ghost_steal.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ghost_steal.wav; sourceTree = "<group>"; };
+		AEDD5F5D30B5399900184D38 /* heal.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = heal.wav; sourceTree = "<group>"; };
+		AEDD5F5E30B5399900184D38 /* idiot_mistake.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = idiot_mistake.wav; sourceTree = "<group>"; };
+		AEDD5F5F30B5399900184D38 /* low_hp_warning.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = low_hp_warning.wav; sourceTree = "<group>"; };
+		AEDD5F6030B5399900184D38 /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
+		AEDD5F6130B5399900184D38 /* reverse.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = reverse.wav; sourceTree = "<group>"; };
+		AEDD5F6230B5399900184D38 /* round_end.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = round_end.wav; sourceTree = "<group>"; };
+		AEDD5F6330B5399900184D38 /* round_start.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = round_start.wav; sourceTree = "<group>"; };
+		AEDD5F6430B5399900184D38 /* tavern_ambient.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = tavern_ambient.wav; sourceTree = "<group>"; };
+		AEDD5F6530B5399900184D38 /* ui_back.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ui_back.wav; sourceTree = "<group>"; };
+		AEDD5F6630B5399900184D38 /* ui_click.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ui_click.wav; sourceTree = "<group>"; };
+		AEDD5F6730B5399900184D38 /* ui_confirm.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ui_confirm.wav; sourceTree = "<group>"; };
+		AEDD5F6830B5399900184D38 /* victory.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = victory.wav; sourceTree = "<group>"; };
 		EC393A7430AB6CD400C8514A /* kiravale-medieval-music-593694.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "kiravale-medieval-music-593694.mp3"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -77,6 +127,7 @@
 		A6F6E43930A56F6900C0CB1D = {
 			isa = PBXGroup;
 			children = (
+				AEDD5F4F30B5398000184D38 /* Sounds */,
 				A6F6E45730A5705B00C0CB1D /* Views */,
 				A6F6E45030A56F9C00C0CB1D /* Models */,
 				A6F6E44430A56F6900C0CB1D /* IDSN533 MyHealerSuck */,
@@ -131,6 +182,38 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		AEDD5F4F30B5398000184D38 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				AEDD5F5030B5399900184D38 /* achievement.wav */,
+				AEDD5F5130B5399900184D38 /* bonk_growl.wav */,
+				AEDD5F5230B5399900184D38 /* bonk_hit.wav */,
+				AEDD5F5330B5399900184D38 /* card_invalid.wav */,
+				AEDD5F5430B5399900184D38 /* card_pickup.wav */,
+				AEDD5F5530B5399900184D38 /* card_place.wav */,
+				AEDD5F5630B5399900184D38 /* card_return.wav */,
+				AEDD5F5730B5399900184D38 /* cave_ambient.wav */,
+				AEDD5F5830B5399900184D38 /* damage.wav */,
+				AEDD5F5930B5399900184D38 /* defeat.wav */,
+				AEDD5F5A30B5399900184D38 /* ghost_appear.wav */,
+				AEDD5F5B30B5399900184D38 /* ghost_laugh.wav */,
+				AEDD5F5C30B5399900184D38 /* ghost_steal.wav */,
+				AEDD5F5D30B5399900184D38 /* heal.wav */,
+				AEDD5F5E30B5399900184D38 /* idiot_mistake.wav */,
+				AEDD5F5F30B5399900184D38 /* low_hp_warning.wav */,
+				AEDD5F6030B5399900184D38 /* README.txt */,
+				AEDD5F6130B5399900184D38 /* reverse.wav */,
+				AEDD5F6230B5399900184D38 /* round_end.wav */,
+				AEDD5F6330B5399900184D38 /* round_start.wav */,
+				AEDD5F6430B5399900184D38 /* tavern_ambient.wav */,
+				AEDD5F6530B5399900184D38 /* ui_back.wav */,
+				AEDD5F6630B5399900184D38 /* ui_click.wav */,
+				AEDD5F6730B5399900184D38 /* ui_confirm.wav */,
+				AEDD5F6830B5399900184D38 /* victory.wav */,
+			);
+			path = Sounds;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -202,7 +285,32 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AEDD5F6A30B53BA500184D38 /* cave_ambient.wav in Resources */,
+				AEDD5F6B30B53BA500184D38 /* defeat.wav in Resources */,
+				AEDD5F6C30B53BA500184D38 /* damage.wav in Resources */,
+				AEDD5F6D30B53BA500184D38 /* ghost_appear.wav in Resources */,
+				AEDD5F6E30B53BA500184D38 /* card_return.wav in Resources */,
+				AEDD5F6F30B53BA500184D38 /* victory.wav in Resources */,
+				AEDD5F7030B53BA500184D38 /* card_invalid.wav in Resources */,
+				AEDD5F7130B53BA500184D38 /* reverse.wav in Resources */,
+				AEDD5F7230B53BA500184D38 /* bonk_growl.wav in Resources */,
+				AEDD5F7330B53BA500184D38 /* round_start.wav in Resources */,
+				AEDD5F7430B53BA500184D38 /* low_hp_warning.wav in Resources */,
+				AEDD5F7530B53BA500184D38 /* ui_confirm.wav in Resources */,
+				AEDD5F7630B53BA500184D38 /* achievement.wav in Resources */,
+				AEDD5F7730B53BA500184D38 /* tavern_ambient.wav in Resources */,
+				AEDD5F7830B53BA500184D38 /* ui_back.wav in Resources */,
+				AEDD5F7930B53BA500184D38 /* README.txt in Resources */,
+				AEDD5F7A30B53BA500184D38 /* bonk_hit.wav in Resources */,
+				AEDD5F7B30B53BA500184D38 /* card_place.wav in Resources */,
+				AEDD5F7C30B53BA500184D38 /* round_end.wav in Resources */,
+				AEDD5F7D30B53BA500184D38 /* ui_click.wav in Resources */,
+				AEDD5F7E30B53BA500184D38 /* ghost_steal.wav in Resources */,
+				AEDD5F7F30B53BA500184D38 /* card_pickup.wav in Resources */,
+				AEDD5F8030B53BA500184D38 /* ghost_laugh.wav in Resources */,
+				AEDD5F8130B53BA500184D38 /* idiot_mistake.wav in Resources */,
 				EC393A7530AB6CD600C8514A /* kiravale-medieval-music-593694.mp3 in Resources */,
+				AEDD5F6930B53B8500184D38 /* heal.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

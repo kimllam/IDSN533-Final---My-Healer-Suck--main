@@ -3,7 +3,7 @@
 //  IDSN533 MyHealerSuck
 //
 //  Created by Kim Lam on 11/11/26.
-//
+//  sound by jingyi
 
 import SwiftUI
 import Combine
@@ -36,7 +36,9 @@ class GameManager: ObservableObject {
     @Published private(set) var pendingThefts: [GhostTheft] = []
     private(set) var stolenCards: [UUID: HealerCard] = [:]
     func finishGhostTheft(_ id: UUID) {
+        guard pendingThefts.contains(where: { $0.id == id }) else { return }
         pendingThefts.removeAll { $0.id == id }
+        AudioManager.shared.playEffect(named: "ghost_steal")
     }
 
     @Published var encounterNumber: Int = 1
@@ -115,6 +117,7 @@ class GameManager: ObservableObject {
 
         teammate.assignedCard = card
         HapticsManager.shared.cardPlaced()
+        AudioManager.shared.playEffect(named: "card_place")
     }
 
     func unassignCard(from teammate: Teammate) {
@@ -126,6 +129,7 @@ class GameManager: ObservableObject {
         availableCards.append(card)
 
         HapticsManager.shared.cardPlaced()
+        AudioManager.shared.playEffect(named: "card_return")
     }
 
     func returnToHand(card: HealerCard) {
@@ -145,6 +149,7 @@ class GameManager: ObservableObject {
 
         if wasAssigned {
             HapticsManager.shared.cardPlaced()
+            AudioManager.shared.playEffect(named: "card_return")
         }
     }
 
@@ -168,6 +173,8 @@ class GameManager: ObservableObject {
         ) else {
             return
         }
+
+        AudioManager.shared.playEffect(named: "round_start")
 
         withAnimation(
             .spring(response: 0.45, dampingFraction: 0.8)
@@ -245,6 +252,8 @@ class GameManager: ObservableObject {
     }
 
     private func finishEncounterRound() {
+        AudioManager.shared.playEffect(named: "round_end")
+
         withAnimation(
             .spring(response: 0.45, dampingFraction: 0.8)
         ) {
@@ -276,6 +285,10 @@ class GameManager: ObservableObject {
 
         let response = actor.assignedCard ?? .doNothing
         let isReversed = response == .reverse
+
+        if isReversed {
+            AudioManager.shared.playEffect(named: "reverse")
+        }
 
         actor.stateMachine?.enter(
             TeammateActingState.self
@@ -508,7 +521,11 @@ class GameManager: ObservableObject {
     ) {
         guard !teammate.isGhost else { return }
 
+        let previousHP = teammate.hp
         teammate.hp = max(0, teammate.hp - amount)
+        guard teammate.hp < previousHP else { return }
+
+        AudioManager.shared.playEffect(named: "damage")
         teammate.feedbackIsHeal = false
         teammate.floatingFeedback = "-\(amount)"
 
@@ -533,6 +550,7 @@ class GameManager: ObservableObject {
             teammate.stateMachine?.enter(
                 TeammateGhostState.self
             )
+            AudioManager.shared.playEffect(named: "ghost_appear")
         }
     }
 
@@ -542,6 +560,8 @@ class GameManager: ObservableObject {
     ) {
         guard !teammate.isGhost else { return }
 
+        let previousHP = teammate.hp
+
         teammate.hp = min(
             teammate.maxHp,
             teammate.hp + amount
@@ -549,10 +569,19 @@ class GameManager: ObservableObject {
 
         teammate.feedbackIsHeal = true
         teammate.floatingFeedback = "+\(amount) ♥"
+
+        // Only play the healing effect when HP actually increases.
+        if teammate.hp > previousHP {
+            AudioManager.shared.playEffect(named: "heal")
+        }
     }
 
     private func damageBonk(amount: Int) {
+        let previousHP = bonkHP
         bonkHP = max(0, bonkHP - amount)
+        guard bonkHP < previousHP else { return }
+
+        AudioManager.shared.playEffect(named: "bonk_hit")
         bonkDamagePopup = "-\(amount)"
 
         withAnimation(
@@ -581,6 +610,7 @@ class GameManager: ObservableObject {
             didPlayerWin = true
             isGameOver = true
             resolutionBannerText = "BONK IS DEFEATED!"
+            AudioManager.shared.playEffect(named: "victory")
             GameRecordStore.shared.record(
                 didWin: true,
                 rounds: encounterNumber,
@@ -594,6 +624,7 @@ class GameManager: ObservableObject {
             isGameOver = true
             resolutionBannerText =
                 "2 Idiots became Ghosts!"
+            AudioManager.shared.playEffect(named: "defeat")
             GameRecordStore.shared.record(
                 didWin: false,
                 rounds: encounterNumber,
@@ -636,4 +667,5 @@ class GameManager: ObservableObject {
         inspectedTeammate = nil
     }
 }
+
 

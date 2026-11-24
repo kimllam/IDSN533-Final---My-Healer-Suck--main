@@ -15,7 +15,7 @@ final class AudioManager: NSObject {
 
     static let shared = AudioManager()
 
-    // Default slider setting of 70% plays at 35% player volume.
+    // Default slider setting of 70% plays at 14% player volume.
     private let musicGain: Float = 0.2
 
     private var applicationIsActive = false
@@ -25,7 +25,8 @@ final class AudioManager: NSObject {
 
     private var musicPlayer: AVAudioPlayer?
     private var ambientPlayer: AVAudioPlayer?
-    private var effectsPlayer: AVAudioPlayer?
+    private var effectsPlayers: [AVAudioPlayer] = []
+    private let maxSimultaneousEffects = 12
 
     private var musicEnabled = true
     private var ambientEnabled = true
@@ -75,7 +76,7 @@ final class AudioManager: NSObject {
         } else {
             musicPlayer?.pause()
             ambientPlayer?.pause()
-            effectsPlayer?.stop()
+            stopEffects()
         }
     }
 
@@ -98,7 +99,7 @@ final class AudioManager: NSObject {
             isInterrupted = true
             musicPlayer?.pause()
             ambientPlayer?.pause()
-            effectsPlayer?.stop()
+            stopEffects()
 
         case .ended:
             isInterrupted = false
@@ -212,7 +213,7 @@ final class AudioManager: NSObject {
 
     func playAmbient(
         named name: String,
-        extension fileExtension: String = "mp3"
+        extension fileExtension: String = "wav"
     ) {
         ambientPlayer = makePlayer(
             named: name,
@@ -237,14 +238,26 @@ final class AudioManager: NSObject {
             return
         }
 
-        effectsPlayer = makePlayer(
+        // Remove sounds that finished playing so they do not accumulate.
+        effectsPlayers.removeAll { !$0.isPlaying }
+
+        // Limit overlapping sounds to prevent excessive volume and memory use.
+        if effectsPlayers.count >= maxSimultaneousEffects {
+            effectsPlayers[0].stop()
+            effectsPlayers.removeFirst()
+        }
+
+        guard let player = makePlayer(
             named: name,
             fileExtension: fileExtension,
             loop: false
-        )
+        ) else {
+            return
+        }
 
-        effectsPlayer?.volume = sfxVolume
-        effectsPlayer?.play()
+        player.volume = sfxVolume
+        effectsPlayers.append(player)
+        player.play()
     }
 
     // MARK: - Player Factory
@@ -286,7 +299,9 @@ final class AudioManager: NSObject {
     private func updatePlayers() {
         musicPlayer?.volume = musicVolume * musicGain
         ambientPlayer?.volume = ambientVolume
-        effectsPlayer?.volume = sfxEnabled ? sfxVolume : 0
+        for player in effectsPlayers {
+            player.volume = sfxEnabled ? sfxVolume : 0
+        }
 
         guard applicationIsActive, !isInterrupted else {
             return
@@ -320,6 +335,12 @@ final class AudioManager: NSObject {
 
     // MARK: - Stop Audio
 
+    private func stopEffects() {
+        effectsPlayers.forEach { $0.stop() }
+        effectsPlayers.removeAll()
+    }
+
+
     func stopMusic() {
         musicPlayer?.stop()
         musicPlayer = nil
@@ -333,8 +354,7 @@ final class AudioManager: NSObject {
     func stopAll() {
         stopMusic()
         stopAmbient()
-        effectsPlayer?.stop()
-        effectsPlayer = nil
+        stopEffects()
     }
 }
 
@@ -399,3 +419,4 @@ final class HapticsManager {
         notification.prepare()
     }
 }
+

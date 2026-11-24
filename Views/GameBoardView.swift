@@ -346,6 +346,9 @@ struct GameBoardView: View {
         // MARK: - Lifecycle
 
         .onAppear {
+            // Start the cave atmosphere when the battle board appears.
+            AudioManager.shared.playAmbient(named: "cave_ambient")
+
             GameRecordStore.shared.beginBattleSession()
             GameRecordStore.shared.refreshForCurrentAccount()
             captureStartingRecordCounts()
@@ -367,6 +370,11 @@ struct GameBoardView: View {
                 // Preserve the guest story and tutorial flow.
                 showStoryIntro = true
             }
+        }
+
+        .onDisappear {
+            // Leave the background music untouched when exiting the battle.
+            AudioManager.shared.stopAmbient()
         }
 
         .onChange(of: avatarChoice) { _, _ in
@@ -517,6 +525,9 @@ struct GameBoardView: View {
         withAnimation {
             newAchievement = pendingAchievements.removeFirst()
         }
+
+        // Play once when an achievement notification appears.
+        AudioManager.shared.playEffect(named: "achievement")
     }
 
     // MARK: - Exit Battle
@@ -2084,6 +2095,7 @@ private struct BoardGhostFlight: View {
         }
     }
 }
+
 
 
 
