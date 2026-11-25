@@ -42,9 +42,11 @@ struct RootView: View {
         .onAppear {
             guard authListenerHandle == nil else { return }
             authListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
-                isAuthenticated = (user != nil)
-                if isAuthenticated {
+                if let user, user.isEmailVerified {
+                    isAuthenticated = true
                     isGuest = false
+                } else {
+                    isAuthenticated = false
                 }
             }
         }

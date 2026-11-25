@@ -7,21 +7,21 @@ import SwiftUI
 import FirebaseAuth
 
 struct HomeView: View {
-        var isGuest: Bool = false
-        var onExitGuest: () -> Void = {}
+    var isGuest: Bool = false
+    var onExitGuest: () -> Void = {}
 
-        init(isGuest: Bool = false, onExitGuest: @escaping () -> Void = {}) {
-            self.isGuest = isGuest
-            self.onExitGuest = onExitGuest
-        }
-    
+    init(isGuest: Bool = false, onExitGuest: @escaping () -> Void = {}) {
+        self.isGuest = isGuest
+        self.onExitGuest = onExitGuest
+    }
+
     @EnvironmentObject var game: GameManager
     @EnvironmentObject private var auth: AuthManager
     @AppStorage("entryMode") private var entryMode = ""
 
     @State private var showHowToPlay = false
     @State private var showSettings = false
-
+    @State private var showProfilePopup = false
 
     // MARK: - Main View
     // Artwork and controls share one coordinate space.
@@ -34,7 +34,7 @@ struct HomeView: View {
             let isPortrait = size.width < size.height
 
             ZStack {
-                //home image
+                // home image
                 Image("landing")
                     .resizable()
                     .scaledToFill()
@@ -57,17 +57,6 @@ struct HomeView: View {
                         insets: insets
                     )
                 }
-
-                // Top-Left account button
-                VStack {
-                    HStack {
-                        accountButton
-                        Spacer()
-                    }
-                    Spacer()
-                }
-                .padding(.top, insets.top + 8)
-                .padding(.leading, insets.leading + 16)
             }
             .frame(
                 width: size.width,
@@ -102,6 +91,20 @@ struct HomeView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
+
+        .sheet(isPresented: $showProfilePopup) {
+            PlayerProfilePopupView(
+                isGuest: isGuest,
+                onExitGuest: {
+                    showProfilePopup = false
+                    onExitGuest()
+                },
+                onSignOut: {
+                    showProfilePopup = false
+                    try? Auth.auth().signOut()
+                }
+            )
+        }
     }
 
     // MARK: - Title Logo
@@ -112,30 +115,6 @@ struct HomeView: View {
             .scaledToFit()
             .allowsHitTesting(false)
             .accessibilityLabel("My Healer Sucks!")
-    }
-
-    // MARK: - Account Button
-
-    private var accountButton: some View {
-        Button {
-            if isGuest {
-                onExitGuest()
-            } else {
-                try? Auth.auth().signOut()
-            }
-        } label: {
-            Text(isGuest ? "Sign In" : "Sign Out")
-                .font(.subheadline.weight(.semibold))
-                .foregroundColor(AppTheme.darkBrown)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(AppTheme.lightTan.opacity(0.9))
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule()
-                        .stroke(AppTheme.darkBrown.opacity(0.4), lineWidth: 1)
-                )
-        }
     }
 
     // MARK: - Portrait Controls
@@ -194,7 +173,14 @@ struct HomeView: View {
                     spacing: compact ? 10 : 14
                 ) {
                     playButton
-                    howToPlayButton
+
+                    HStack(spacing: 12) {
+                        howToPlayButton
+                            .frame(maxWidth: .infinity)
+
+                        profileButton
+                            .frame(width: 46, height: 46)
+                    }
                 }
                 .frame(width: buttonWidth)
                 .padding(
@@ -222,7 +208,7 @@ struct HomeView: View {
 
         let compact = screen.height < 400
         let gap: CGFloat = compact ? 10 : 12
-        let settingsSize: CGFloat = 46
+        let iconButtonSize: CGFloat = 46
         let playHeight: CGFloat = 52
         let secondaryHeight: CGFloat = 46
         let titleMaxHeight: CGFloat = compact ? 110 : 140
@@ -231,8 +217,8 @@ struct HomeView: View {
         // spans the right-side parchment space.
 
         let panelWidth = min(
-            290,
-            max(220, screen.width * 0.25)
+            310,
+            max(240, screen.width * 0.28)
         )
 
         let rightZoneStart = screen.width * 0.64999
@@ -297,10 +283,16 @@ struct HomeView: View {
                 howToPlayButton
                     .frame(maxWidth: .infinity)
 
+                profileButton
+                    .frame(
+                        width: iconButtonSize,
+                        height: iconButtonSize
+                    )
+
                 settingsButton
                     .frame(
-                        width: settingsSize,
-                        height: settingsSize
+                        width: iconButtonSize,
+                        height: iconButtonSize
                     )
             }
             .frame(width: panelWidth)
@@ -313,6 +305,45 @@ struct HomeView: View {
             width: screen.width,
             height: screen.height
         )
+    }
+
+    // MARK: - Profile Button
+
+    private var profileButton: some View {
+        Button {
+            showProfilePopup = true
+        } label: {
+            Image(systemName: "person.fill")
+                .font(
+                    .system(
+                        size: 20,
+                        weight: .semibold
+                    )
+                )
+                .foregroundStyle(AppTheme.darkBrown)
+                .frame(
+                    width: 46,
+                    height: 46
+                )
+                .background(
+                    AppTheme.lightTan,
+                    in: Circle()
+                )
+                .overlay {
+                    Circle()
+                        .stroke(
+                            AppTheme.darkBrown,
+                            lineWidth: 2
+                        )
+                }
+                .shadow(
+                    color: .black.opacity(0.18),
+                    radius: 3,
+                    y: 2
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Player Profile")
     }
 
     // MARK: - Settings Button
@@ -356,34 +387,14 @@ struct HomeView: View {
     }
 
     // MARK: - Play Button
-    // Restore verified Firebase accounts.
-    // Keep the original button appearance.
 
     private var playButton: some View {
         NavigationLink {
-            if auth.isLoggedIn && auth.isEmailVerified {
-                GameBoardView()
-                    .navigationBarBackButtonHidden(true)
-                    .toolbar(
-                        .hidden,
-                        for: .navigationBar
-                    )
-                    .onAppear {
-                        entryMode = "account"
-                        GameRecordStore.shared
-                            .refreshForCurrentAccount()
-                    }
-            } else {
-                WelcomeView()
-            }
+            GameBoardView()
         } label: {
-
             Text("Play")
                 .font(
-                    .system(
-                        size: 20,
-                        weight: .bold
-                    )
+                    .system(size: 20, weight: .bold)
                 )
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -406,7 +417,6 @@ struct HomeView: View {
                 )
         }
         .buttonStyle(.plain)
-        .disabled(!auth.hasCheckedAuthState)
     }
 
     // MARK: - How to Play Button
@@ -446,6 +456,89 @@ struct HomeView: View {
                 )
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Player Profile Pop-Up
+
+private struct PlayerProfilePopupView: View {
+    let isGuest: Bool
+    let onExitGuest: () -> Void
+    let onSignOut: () -> Void
+
+    @EnvironmentObject private var auth: AuthManager
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("Player Profile")
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(AppTheme.darkBrown)
+
+                Spacer()
+
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(AppTheme.darkBrown.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+            }
+
+            Divider()
+
+            if auth.isLoggedIn && !isGuest {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Signed In")
+                        .font(.headline)
+                        .foregroundStyle(AppTheme.darkBrown)
+
+                    if let email = Auth.auth().currentUser?.email, !email.isEmpty {
+                        Text(email)
+                            .font(.subheadline)
+                            .foregroundStyle(AppTheme.darkBrown.opacity(0.8))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer()
+
+                Button("Sign Out", action: onSignOut)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(AppTheme.darkBrown, in: Capsule())
+                    .buttonStyle(.plain)
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Guest Player")
+                        .font(.headline)
+                        .foregroundStyle(AppTheme.darkBrown)
+
+                    Text("Playing as a guest.")
+                        .font(.subheadline)
+                        .foregroundStyle(AppTheme.darkBrown.opacity(0.8))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer()
+
+                Button("Sign In", action: onExitGuest)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(AppTheme.darkBrown, in: Capsule())
+                    .buttonStyle(.plain)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AppTheme.backgroundTan.ignoresSafeArea())
     }
 }
 

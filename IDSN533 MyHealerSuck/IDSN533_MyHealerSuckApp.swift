@@ -1,4 +1,3 @@
-
 //
 //  IDSN533_MyHealerSuckApp.swift
 //  IDSN533 MyHealerSuck
@@ -105,10 +104,20 @@ struct MyHealerSucksApp: App {
     }
 
     // MARK: - Main Window
-
-        var body: some Scene {
+    var body: some Scene {
             WindowGroup {
                 RootView()
+                    .environmentObject(game)
+                    .environmentObject(authManager)
+                    .environmentObject(appRoute)
+                    .onAppear {
+                        LandscapeOrientation.request()
+                    }
+                    .onChange(of: scenePhase) { _, newPhase in
+                        if newPhase == .active {
+                            LandscapeOrientation.request()
+                        }
+                    }
             }
         }
     }

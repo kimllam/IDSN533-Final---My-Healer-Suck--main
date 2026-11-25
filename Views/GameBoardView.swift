@@ -334,13 +334,13 @@ struct GameBoardView: View {
 
         // MARK: - Exit Confirmation
 
-        .alert("Exit to Main Menu?", isPresented: $showExitConfirmation) {
+        .alert("Returning Home?", isPresented: $showExitConfirmation) {
             Button("Keep Playing", role: .cancel) {}
             Button("Exit Battle", role: .destructive) {
                 exitBattleToMainMenu()
             }
         } message: {
-            Text("Your current unfinished battle will be discarded. Your account and previously saved results will stay intact.")
+            Text("Your current battle will be discarded.")
         }
 
         // MARK: - Lifecycle
@@ -1231,7 +1231,7 @@ private func healerHand(
                         }
 
                         pauseMenuButton(
-                            "Exit to Main Menu",
+                            "Return Home",
                             icon: "house.fill",
                             compact: compact
                         ) {
