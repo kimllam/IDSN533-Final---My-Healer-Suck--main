@@ -106,43 +106,12 @@ struct MyHealerSucksApp: App {
 
     // MARK: - Main Window
 
-    var body: some Scene {
-
-        WindowGroup {
-
-            NavigationStack {
-                if appRoute.showingAccountSelection {
-                    WelcomeView()
-                } else {
-                    HomeView()
-                }
-            }
-            
-
-            // Shared game state
-            .id(appRoute.rootID)
-            .environmentObject(appRoute)
-            .environmentObject(game)
-
-            // Shared authentication state
-            .environmentObject(authManager)
-            .onAppear {
-                LandscapeOrientation.request()
-            }
-            .onChange(
-                of: scenePhase,
-                initial: true
-            ) { _, phase in
-                AudioManager.shared.setApplicationActive(
-                    phase == .active
-                )
-                if phase == .active {
-                    LandscapeOrientation.request()
-                }
+        var body: some Scene {
+            WindowGroup {
+                RootView()
             }
         }
     }
-}
 
 
 

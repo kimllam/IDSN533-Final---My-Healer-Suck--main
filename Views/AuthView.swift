@@ -11,13 +11,11 @@
 import SwiftUI
 
 struct AuthView: View {
-
-    // MARK: - Authentication Mode
-
+    var onContinueAsGuest: () -> Void = {}
+    
     enum Mode {
         case signUp
-        case logIn
-    }
+        case logIn}
 
     @EnvironmentObject private var auth: AuthManager
     @AppStorage("entryMode") private var entryMode = ""
@@ -38,36 +36,14 @@ struct AuthView: View {
     @State private var alertTitle = "Account"
     @State private var alertMessage = ""
 
-    // MARK: - Colors
-
-    private let backgroundTan = Color(
-        red: 252.0 / 255.0,
-        green: 220.0 / 255.0,
-        blue: 187.0 / 255.0
-    )
-
-    private let paper = Color(
-        red: 255.0 / 255.0,
-        green: 243.0 / 255.0,
-        blue: 228.0 / 255.0
-    )
-
-    private let darkBrown = Color(
-        red: 89.0 / 255.0,
-        green: 59.0 / 255.0,
-        blue: 46.0 / 255.0
-    )
-
-    private let outline = Color(
-        red: 190.0 / 255.0,
-        green: 151.0 / 255.0,
-        blue: 119.0 / 255.0
-    )
-
     // MARK: - Initialization
 
-    init(mode: Mode) {
+    init(
+        mode: Mode = .logIn,
+        onContinueAsGuest: @escaping () -> Void = {}
+    ) {
         _mode = State(initialValue: mode)
+        self.onContinueAsGuest = onContinueAsGuest
     }
 
     private var isSignUp: Bool {
@@ -76,59 +52,63 @@ struct AuthView: View {
 
     // MARK: - Main View
 
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                backgroundTan
-                    .ignoresSafeArea()
+        var body: some View {
+            GeometryReader { geometry in
+                ZStack {
+                    AppTheme.backgroundTan
+                        .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 22) {
-                        if showVerification {
-                            verificationHeader
-                            verificationPanel
-                        } else {
-                            authenticationHeader
-                            authenticationPanel
+                    ScrollView {
+                        VStack(spacing: 22) {
+                            if showVerification {
+                                verificationHeader
+                                verificationPanel
+                            } else {
+                                authenticationHeader
+                                authenticationPanel
+
+    // MARK: - Guest Option
+                                Button(action: {
+                                    onContinueAsGuest()
+                                }) {
+                                    Text("Play as Guest")
+                                        .font(.headline)
+                                        .foregroundColor(AppTheme.darkBrown)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 14)
+                                        .background(AppTheme.darkBrown.opacity(0.12))
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(AppTheme.darkBrown.opacity(0.35), lineWidth: 1)
+                                        )
+                                }
+                            }
                         }
+                        .frame(maxWidth: 380)
+                        .padding(.horizontal, 22)
+                        .padding(.vertical, 24)
+                        .frame(
+                            maxWidth: .infinity,
+                            minHeight: geometry.size.height,
+                            alignment: .center
+                        )
                     }
-                    .frame(maxWidth: 380)
-                    .padding(.horizontal, 22)
-                    .padding(.vertical, 24)
-                    .frame(
-                        maxWidth: .infinity,
-                        minHeight: geometry.size.height,
-                        alignment: .center
-                    )
+                    .scrollIndicators(.hidden)
+                    .scrollDismissesKeyboard(.interactively)
                 }
-                .scrollIndicators(.hidden)
-                .scrollDismissesKeyboard(.interactively)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .tint(AppTheme.darkBrown)
+            .alert(
+                alertTitle,
+                isPresented: $showAlert
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(alertMessage)
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .tint(darkBrown)
-
-        // MARK: - Navigate to Game
-        // Updated by Jingyi: Hide the navigation bar
-        // for the same landscape layout as guest mode.
-
-        .navigationDestination(
-            isPresented: $navigateToGame
-        ) {
-            GameBoardView()
-                .navigationBarBackButtonHidden(true)
-                .toolbar(.hidden, for: .navigationBar)
-        }
-
-        .alert(
-            alertTitle,
-            isPresented: $showAlert
-        ) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(alertMessage)
-        }
-    }
 
     // MARK: - Authentication Header
 
@@ -140,7 +120,7 @@ struct AuthView: View {
                     : "person.crop.circle"
             )
             .font(.system(size: 48))
-            .foregroundStyle(darkBrown)
+            .foregroundStyle(AppTheme.darkBrown)
 
             Text(
                 isSignUp
@@ -154,7 +134,7 @@ struct AuthView: View {
                     design: .serif
                 )
             )
-            .foregroundStyle(darkBrown)
+            .foregroundStyle(AppTheme.darkBrown)
 
             Text(
                 isSignUp
@@ -169,7 +149,7 @@ struct AuthView: View {
             )
             .italic()
             .foregroundStyle(
-                darkBrown.opacity(0.7)
+                AppTheme.darkBrown.opacity(0.7)
             )
         }
         .multilineTextAlignment(.center)
@@ -213,7 +193,7 @@ struct AuthView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
                 .background(
-                    darkBrown,
+                    AppTheme.darkBrown,
                     in: RoundedRectangle(
                         cornerRadius: 13
                     )
@@ -224,7 +204,7 @@ struct AuthView: View {
             .opacity(isSubmitting ? 0.65 : 1)
             .padding(.top, 8)
 
-            // MARK: - Password Reset
+  // MARK: - Password Reset
 
             if !isSignUp {
                 Button {
@@ -266,10 +246,10 @@ struct AuthView: View {
             .buttonStyle(.plain)
             .disabled(isSubmitting)
         }
-        .foregroundStyle(darkBrown)
+        .foregroundStyle(AppTheme.darkBrown)
         .padding(22)
         .background(
-            paper,
+            AppTheme.paper,
             in: RoundedRectangle(
                 cornerRadius: 20
             )
@@ -279,7 +259,7 @@ struct AuthView: View {
                 cornerRadius: 20
             )
             .stroke(
-                darkBrown.opacity(0.6),
+                AppTheme.darkBrown.opacity(0.6),
                 lineWidth: 1.5
             )
         }
@@ -353,7 +333,7 @@ struct AuthView: View {
                             ? "eye.slash"
                             : "eye"
                     )
-                    .foregroundStyle(darkBrown)
+                    .foregroundStyle(AppTheme.darkBrown)
                 }
                 .buttonStyle(.plain)
             }
@@ -395,7 +375,6 @@ struct AuthView: View {
     }
 
     // MARK: - Verification Header
-    // Added by Jingyi: Email verification screen.
 
     private var verificationHeader: some View {
         VStack(spacing: 14) {
@@ -403,7 +382,7 @@ struct AuthView: View {
                 systemName: "envelope.badge.shield.half.filled"
             )
             .font(.system(size: 54))
-            .foregroundStyle(darkBrown)
+            .foregroundStyle(AppTheme.darkBrown)
             .symbolRenderingMode(.hierarchical)
 
             Text("Verify Your Email")
@@ -414,7 +393,7 @@ struct AuthView: View {
                         design: .serif
                     )
                 )
-                .foregroundStyle(darkBrown)
+                .foregroundStyle(AppTheme.darkBrown)
 
             Text("One more step before the chaos begins.")
                 .font(
@@ -425,7 +404,7 @@ struct AuthView: View {
                 )
                 .italic()
                 .foregroundStyle(
-                    darkBrown.opacity(0.75)
+                    AppTheme.darkBrown.opacity(0.75)
                 )
         }
         .multilineTextAlignment(.center)
@@ -439,7 +418,7 @@ struct AuthView: View {
         VStack(spacing: 20) {
             Image(systemName: "mail")
                 .font(.system(size: 32))
-                .foregroundStyle(darkBrown)
+                .foregroundStyle(AppTheme.darkBrown)
 
             Text("Check Your Inbox")
                 .font(
@@ -449,14 +428,14 @@ struct AuthView: View {
                         design: .serif
                     )
                 )
-                .foregroundStyle(darkBrown)
+                .foregroundStyle(AppTheme.darkBrown)
 
             Text(
                 "We've sent a verification link to:"
             )
             .font(.system(size: 15))
             .foregroundStyle(
-                darkBrown.opacity(0.8)
+                AppTheme.darkBrown.opacity(0.8)
             )
             .multilineTextAlignment(.center)
 
@@ -467,13 +446,13 @@ struct AuthView: View {
                         weight: .semibold
                     )
                 )
-                .foregroundStyle(darkBrown)
+                .foregroundStyle(AppTheme.darkBrown)
                 .multilineTextAlignment(.center)
                 .textSelection(.enabled)
 
             Divider()
                 .overlay(
-                    outline.opacity(0.4)
+                    AppTheme.outline.opacity(0.4)
                 )
 
             Text(
@@ -481,7 +460,7 @@ struct AuthView: View {
             )
             .font(.system(size: 15))
             .foregroundStyle(
-                darkBrown.opacity(0.85)
+                AppTheme.darkBrown.opacity(0.85)
             )
             .multilineTextAlignment(.center)
             .fixedSize(
@@ -518,7 +497,7 @@ struct AuthView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
                 .background(
-                    darkBrown,
+                    AppTheme.darkBrown,
                     in: RoundedRectangle(
                         cornerRadius: 13
                     )
@@ -547,11 +526,11 @@ struct AuthView: View {
                         weight: .semibold
                     )
                 )
-                .foregroundStyle(darkBrown)
+                .foregroundStyle(AppTheme.darkBrown)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
                 .background(
-                    backgroundTan,
+                    AppTheme.backgroundTan,
                     in: RoundedRectangle(
                         cornerRadius: 12
                     )
@@ -561,7 +540,7 @@ struct AuthView: View {
                         cornerRadius: 12
                     )
                     .stroke(
-                        outline.opacity(0.7),
+                        AppTheme.outline.opacity(0.7),
                         lineWidth: 1
                     )
                 }
@@ -582,7 +561,7 @@ struct AuthView: View {
                         )
                     )
                     .foregroundStyle(
-                        darkBrown.opacity(0.85)
+                        AppTheme.darkBrown.opacity(0.85)
                     )
                     .underline()
             }
@@ -591,7 +570,7 @@ struct AuthView: View {
         }
         .padding(24)
         .background(
-            paper,
+            AppTheme.paper,
             in: RoundedRectangle(
                 cornerRadius: 22
             )
@@ -601,7 +580,7 @@ struct AuthView: View {
                 cornerRadius: 22
             )
             .stroke(
-                outline.opacity(0.85),
+                AppTheme.outline.opacity(0.85),
                 lineWidth: 1.2
             )
         }

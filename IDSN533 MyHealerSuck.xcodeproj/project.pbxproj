@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A69B455430B78F760060EC65 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69B455330B78F720060EC65 /* RootView.swift */; };
+		A69B455A30B794D70060EC65 /* GameTutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69B455930B794D10060EC65 /* GameTutorialView.swift */; };
+		A69B455C30B794E30060EC65 /* HowToPlaySheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69B455B30B794DB0060EC65 /* HowToPlaySheetView.swift */; };
+		A69B456030B795020060EC65 /* GameStoryIntroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69B455F30B794FE0060EC65 /* GameStoryIntroView.swift */; };
+		A69B456630B796480060EC65 /* BattleGuideOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69B456530B796400060EC65 /* BattleGuideOptionsView.swift */; };
 		A6F6E45B30A5714600C0CB1D /* GameManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F6E45630A5704900C0CB1D /* GameManager.swift */; };
 		A6F6E45C30A5714C00C0CB1D /* Teammate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F6E45530A5703A00C0CB1D /* Teammate.swift */; };
 		A6F6E45D30A5714F00C0CB1D /* TeammateStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F6E45430A5702900C0CB1D /* TeammateStates.swift */; };
@@ -56,6 +61,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A69B455330B78F720060EC65 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		A69B455930B794D10060EC65 /* GameTutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTutorialView.swift; sourceTree = "<group>"; };
+		A69B455B30B794DB0060EC65 /* HowToPlaySheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToPlaySheetView.swift; sourceTree = "<group>"; };
+		A69B455F30B794FE0060EC65 /* GameStoryIntroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStoryIntroView.swift; sourceTree = "<group>"; };
+		A69B456530B796400060EC65 /* BattleGuideOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleGuideOptionsView.swift; sourceTree = "<group>"; };
 		A6F6E44230A56F6900C0CB1D /* IDSN533 MyHealerSuck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "IDSN533 MyHealerSuck.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6F6E45130A56FEB00C0CB1D /* HealerCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealerCard.swift; sourceTree = "<group>"; };
 		A6F6E45230A5700500C0CB1D /* TeammateCardDeck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeammateCardDeck.swift; sourceTree = "<group>"; };
@@ -124,6 +134,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		A69B455830B794BD0060EC65 /* HomeViewOthers */ = {
+			isa = PBXGroup;
+			children = (
+				A69B456530B796400060EC65 /* BattleGuideOptionsView.swift */,
+				A69B455F30B794FE0060EC65 /* GameStoryIntroView.swift */,
+				A69B455930B794D10060EC65 /* GameTutorialView.swift */,
+				A69B455B30B794DB0060EC65 /* HowToPlaySheetView.swift */,
+				A6F6E46830A576DB00C0CB1D /* HomeView.swift */,
+			);
+			path = HomeViewOthers;
+			sourceTree = "<group>";
+		};
 		A6F6E43930A56F6900C0CB1D = {
 			isa = PBXGroup;
 			children = (
@@ -165,6 +187,8 @@
 		A6F6E45730A5705B00C0CB1D /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A69B455830B794BD0060EC65 /* HomeViewOthers */,
+				A69B455330B78F720060EC65 /* RootView.swift */,
 				AE8A441530AA4B680054775D /* AuthView.swift */,
 				AE8A441330AA4AB00054775D /* WelcomeView.swift */,
 				AE8A440D30AA30190054775D /* PlayerProfileView.swift */,
@@ -172,7 +196,6 @@
 				A6F6E45830A5706A00C0CB1D /* TeammateCardView.swift */,
 				A6F6E45930A5707A00C0CB1D /* EncounterResolutionView.swift */,
 				A6F6E45A30A5708F00C0CB1D /* GameBoardView.swift */,
-				A6F6E46830A576DB00C0CB1D /* HomeView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -324,6 +347,8 @@
 				A6F6E46330A5716900C0CB1D /* TeammateCardView.swift in Sources */,
 				AE8A444530AA52700054775D /* AuthManager.swift in Sources */,
 				A6F6E46230A5716500C0CB1D /* EncounterResolutionView.swift in Sources */,
+				A69B456630B796480060EC65 /* BattleGuideOptionsView.swift in Sources */,
+				A69B455430B78F760060EC65 /* RootView.swift in Sources */,
 				AE8A441430AA4AB50054775D /* WelcomeView.swift in Sources */,
 				AE8A441230AA3FFA0054775D /* AudioManager.swift in Sources */,
 				AEAB4DD330B10DC20054ECF8 /* CloudPlayerProfileStore.swift in Sources */,
@@ -332,10 +357,13 @@
 				A6F6E46130A5715F00C0CB1D /* GameBoardView.swift in Sources */,
 				A6F6E46930A576DE00C0CB1D /* HomeView.swift in Sources */,
 				A6F6E45B30A5714600C0CB1D /* GameManager.swift in Sources */,
+				A69B455A30B794D70060EC65 /* GameTutorialView.swift in Sources */,
 				AE8A441030AA3E8C0054775D /* GameRecordStore.swift in Sources */,
 				AE8A440E30AA30230054775D /* PlayerProfileView.swift in Sources */,
+				A69B456030B795020060EC65 /* GameStoryIntroView.swift in Sources */,
 				A6F6E45F30A5715700C0CB1D /* TeammateCardDeck.swift in Sources */,
 				AE8A440C30AA2E820054775D /* SettingsView.swift in Sources */,
+				A69B455C30B794E30060EC65 /* HowToPlaySheetView.swift in Sources */,
 				AE8A441630AA4B750054775D /* AuthView.swift in Sources */,
 				A6F6E45C30A5714C00C0CB1D /* Teammate.swift in Sources */,
 				A6F6E46030A5715B00C0CB1D /* HealerCard.swift in Sources */,
@@ -487,7 +515,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.guppy.IDSN533-MyHealerSuck";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.guppy.IDSN533-MyHealerSucks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
