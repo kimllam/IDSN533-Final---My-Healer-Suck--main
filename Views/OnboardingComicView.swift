@@ -10,6 +10,7 @@ import SwiftUI
 // screen panel names
 
 enum OnboardingAsset {
+    static let tapToStart = "taptostart"
     static let panel1Exit = "intro_01_exit"
     static let panel2Bonk = "intro_02_bonk"
     static let panel3HealerChaos = "intro_03_healer_chaos"
@@ -61,6 +62,8 @@ struct OnboardingComicView: View {
         self.onSkip = onSkip
     }
 
+    @State private var showTapToStart: Bool = true
+    @State private var isPulsing: Bool = false
     @State private var revealIndex: Int = 0
     @State private var newlyRevealedIndex: Int? = nil
 
@@ -136,6 +139,68 @@ struct OnboardingComicView: View {
     }
 
     var body: some View {
+        ZStack {
+            if showTapToStart {
+                tapToStartScreen
+                    .transition(.opacity)
+            } else {
+                comicStorylineView
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.45), value: showTapToStart)
+        .environment(\.colorScheme, .light)
+    }
+
+    // tap to start screen
+
+    private var tapToStartScreen: some View {
+        ZStack {
+            parchmentBG
+                .ignoresSafeArea()
+
+            if let uiImage = UIImage(named: OnboardingAsset.tapToStart) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                    .scaleEffect(isPulsing ? 1.015 : 1.0)
+                    .animation(
+                        .easeInOut(duration: 1.6).repeatForever(autoreverses: true),
+                        value: isPulsing
+                    )
+            } else {
+                VStack(spacing: 12) {
+                    Text("My Healer Sucks")
+                        .font(.system(.largeTitle, design: .serif).weight(.bold))
+                        .foregroundStyle(inkBrown)
+                    Text("Tap to Start")
+                        .font(.system(.headline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(inkBrown.opacity(0.8))
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            startStoryline()
+        }
+        .onAppear {
+            isPulsing = true
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("My Healer Sucks. Tap to start.")
+        .accessibilityAddTraits(.isButton)
+    }
+
+    private func startStoryline() {
+        withAnimation(.easeInOut(duration: 0.45)) {
+            showTapToStart = false
+        }
+    }
+
+    // comic storyline view
+
+    private var comicStorylineView: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
             let height = proxy.size.height
@@ -167,7 +232,6 @@ struct OnboardingComicView: View {
             .frame(width: width, height: height)
             .background(parchmentBG.ignoresSafeArea())
         }
-        .environment(\.colorScheme, .light)
     }
 
     // each screen layout
@@ -407,7 +471,7 @@ private struct ComicTopBar: View {
     var body: some View {
         HStack {
             Spacer(minLength: 0)
-            Text("Backstory")
+            Text("THE BACKSTORY")
                 .font(.system(.headline, design: .serif).weight(.semibold))
                 .foregroundStyle(inkColor.opacity(0.9))
                 .lineLimit(1)
@@ -482,7 +546,6 @@ private struct ComicBottomBar: View {
         }
     }
 }
-
 
 #Preview("Landscape Onboarding") {
     OnboardingComicView(
