@@ -1,4 +1,3 @@
-
 //
 //  GameBoardView.swift
 //  IDSN533 MyHealerSuck
@@ -36,11 +35,19 @@ struct GameBoardView: View {
     // MARK: - Pause & Guides
 
     @State private var isPaused = false
+    @State private var pendingPauseAction: PauseMenuAction?
     @State private var showExitConfirmation = false
     @State private var showSettings = false
     @State private var showHowToPlay = false
     @State private var showGuideOptions = false
     @State private var pendingGuideAction: BattleGuideAction?
+
+    private enum PauseMenuAction {
+        case profile
+        case settings
+        case howToPlay
+        case exit
+    }
 
     private enum BattleGuideAction {
         case replayTutorial
@@ -146,17 +153,29 @@ struct GameBoardView: View {
                 if isPaused && !game.isGameOver {
                     PauseOverlayView(
                         compact: compact,
+                        onClose: {
+                            withAnimation {
+                                pendingPauseAction = nil
+                                isPaused = false
+                            }
+                        },
                         onResume: {
-                            withAnimation { isPaused = false }
+                            withAnimation {
+                                pendingPauseAction = nil
+                                isPaused = false
+                            }
+                        },
+                        onOpenProfile: {
+                            triggerPauseAction(.profile)
                         },
                         onOpenSettings: {
-                            showSettings = true
+                            triggerPauseAction(.settings)
                         },
                         onOpenHowToPlay: {
-                            showHowToPlay = true
+                            triggerPauseAction(.howToPlay)
                         },
                         onRequestExit: {
-                            showExitConfirmation = true
+                            triggerPauseAction(.exit)
                         }
                     )
                     .zIndex(20)
@@ -283,6 +302,7 @@ struct GameBoardView: View {
         .onChange(of: game.isGameOver) { _, ended in
             guard ended else { return }
             isPaused = false
+            pendingPauseAction = nil
             showBattleResults = false
 
             Task { @MainActor in
@@ -328,6 +348,30 @@ struct GameBoardView: View {
         }
     }
 
+    // MARK: - Pause Menu Dispatch
+
+    private func triggerPauseAction(_ action: PauseMenuAction) {
+        pendingPauseAction = action
+        withAnimation(.easeOut(duration: 0.15)) {
+            isPaused = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            guard let nextAction = pendingPauseAction else { return }
+            pendingPauseAction = nil
+            switch nextAction {
+            case .profile:
+                loadAvatar()
+                showProfile = true
+            case .settings:
+                showSettings = true
+            case .howToPlay:
+                showHowToPlay = true
+            case .exit:
+                showExitConfirmation = true
+            }
+        }
+    }
+
     // MARK: - Records, Achievements & Session Flow
 
     private func captureStartingRecordCounts() {
@@ -355,6 +399,7 @@ struct GameBoardView: View {
 
     private func exitBattleToMainMenu() {
         isPaused = false
+        pendingPauseAction = nil
         showExitConfirmation = false
         game.inspectedTeammate = nil
         GameRecordStore.shared.endBattleSession()
@@ -368,6 +413,7 @@ struct GameBoardView: View {
         recordUpdate = nil
         showBattleResults = false
         isPaused = false
+        pendingPauseAction = nil
         game.inspectedTeammate = nil
         GameRecordStore.shared.endBattleSession()
         game.resetGame()
@@ -411,15 +457,6 @@ struct GameBoardView: View {
                 .minimumScaleFactor(0.75)
 
             Spacer(minLength: 4)
-
-            Button {
-                loadAvatar()
-                showProfile = true
-            } label: {
-                playerAvatarButton
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Player Profile")
 
             Button {
                 showGuideOptions = true
@@ -706,38 +743,6 @@ struct GameBoardView: View {
     }
 
     // MARK: - Avatar
-
-    private var playerAvatarButton: some View {
-        ZStack {
-            Circle()
-                .fill(AppTheme.lightTan)
-
-            if avatarChoice == "photo", let customAvatar {
-                Image(uiImage: customAvatar)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 40, height: 40)
-                    .clipShape(Circle())
-            } else if avatarChoice == "healer card" {
-                Image(systemName: "person.crop.circle.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .foregroundStyle(AppTheme.darkBrown)
-                    .padding(9)
-            } else {
-                Image(avatarChoice)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(5)
-            }
-        }
-        .frame(width: 44, height: 44)
-        .clipShape(Circle())
-        .overlay {
-            Circle()
-                .stroke(AppTheme.darkBrown, lineWidth: 1.5)
-        }
-    }
 
     private func loadAvatar() {
         avatarChoice = UserDefaults.standard.string(

@@ -93,17 +93,8 @@ struct HomeView: View {
         }
 
         .sheet(isPresented: $showProfilePopup) {
-            PlayerProfilePopupView(
-                isGuest: isGuest,
-                onExitGuest: {
-                    showProfilePopup = false
-                    onExitGuest()
-                },
-                onSignOut: {
-                    showProfilePopup = false
-                    try? Auth.auth().signOut()
-                }
-            )
+            PlayerProfileView()
+                .environmentObject(auth)
         }
     }
 
@@ -392,7 +383,7 @@ struct HomeView: View {
         NavigationLink {
             GameBoardView()
         } label: {
-            Text("Play")
+            Text("Start Game")
                 .font(
                     .system(size: 20, weight: .bold)
                 )

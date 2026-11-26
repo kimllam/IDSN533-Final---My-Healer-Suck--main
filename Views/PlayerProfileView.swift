@@ -5,12 +5,10 @@
 //  Created by Jingyi on 11/15/26.
 //
 
-
-
-
 import SwiftUI
 import PhotosUI
 import UIKit
+import FirebaseAuth
 
 // MARK: - Existing Game Palette
 
@@ -196,13 +194,20 @@ struct PlayerProfileView: View {
     @EnvironmentObject private var appRoute: AppRouteState
 
     @AppStorage("entryMode") private var entryMode = ""
-    @State private var showExitConfirmation = false
-    @State private var showExitError = false
-    @State private var exitErrorMessage = ""
 
     // Guest and registered account have different exit semantics.
     private var isGuest: Bool {
         entryMode != "account" || !auth.isLoggedIn || !auth.isEmailVerified
+    }
+
+    private var playerIdentityLabel: String {
+        if isGuest {
+            return "Guest Player"
+        }
+        if let email = Auth.auth().currentUser?.email, !email.isEmpty {
+            return email
+        }
+        return "Registered Player"
     }
 
     // Keep guest and registered account nicknames separate.
@@ -341,14 +346,13 @@ struct PlayerProfileView: View {
                                         )
                                         .lineLimit(1)
 
-                                        Text(
-                                            "The Unfortunate Healer"
-                                        )
-                                        .font(.caption)
-                                        .foregroundStyle(
-                                            ProfileStyle.brown
-                                                .opacity(0.72)
-                                        )
+                                        Text(playerIdentityLabel)
+                                            .font(.caption)
+                                            .lineLimit(1)
+                                            .foregroundStyle(
+                                                ProfileStyle.brown
+                                                    .opacity(0.72)
+                                            )
                                     }
 
                                     Spacer(minLength: 4)
@@ -421,40 +425,10 @@ struct PlayerProfileView: View {
                                     )
                                 }
                                 .buttonStyle(.plain)
-
                             }
 
-                            partyShowcase(
-                                landscape: isLandscape
-                            )
-                            .padding(.top, 12)
-
-                            // Guests return home without calling Firebase sign-out.
-                            // Registered accounts explicitly log out.
-                            Button {
-                                showExitConfirmation = true
-                            } label: {
-                                Label(
-                                    isGuest ? "Return to Home" : "Log Out",
-                                    systemImage: isGuest
-                                        ? "house.fill"
-                                        : "rectangle.portrait.and.arrow.right"
-                                )
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(ProfileStyle.brown)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 52)
-                                .background(
-                                    ProfileStyle.paper,
-                                    in: RoundedRectangle(cornerRadius: 14)
-                                )
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(ProfileStyle.line, lineWidth: 1.3)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.top, 4)
+                            achievementsPreview
+                                .padding(.top, 8)
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 14)
@@ -513,61 +487,20 @@ struct PlayerProfileView: View {
             // Disconnect only when this profile flow is dismissed.
             cloudProfile.disconnect()
         }
-        .confirmationDialog(
-            isGuest ? "Return to Home?" : "Log Out?",
-            isPresented: $showExitConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button(
-                isGuest ? "Return to Home" : "Log Out",
-                role: isGuest ? nil : .destructive
-            ) {
-                exitToLaunchScreen()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Return to the original Play screen?")
-        }
-        .alert("Unable to Exit", isPresented: $showExitError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(exitErrorMessage)
-        }
     }
 
-    // MARK: - Exit To Initial Screen
+    // MARK: - Achievements Preview
 
-    private func exitToLaunchScreen() {
-        do {
-            GameRecordStore.shared.endBattleSession()
-            // Only account holders who selected account mode are signed out.
-            if !isGuest {
-                try auth.logOut()
-            }
+    private var achievementsPreview: some View {
+        let earned = BattleAchievement.allCases.filter { records.isUnlocked($0) }
 
-            entryMode = ""
-            GameRecordStore.shared.refreshForCurrentAccount()
-            game.inspectedTeammate = nil
-            game.resetGame()
-            appRoute.returnToLaunchScreen()
-        } catch {
-            exitErrorMessage = error.localizedDescription
-            showExitError = true
-        }
-    }
-
-    // MARK: - Party Showcase
-
-    private func partyShowcase(
-        landscape: Bool
-    ) -> some View {
-        VStack(spacing: 9) {
+        return VStack(spacing: 12) {
             HStack(spacing: 10) {
                 Rectangle()
                     .fill(ProfileStyle.line)
                     .frame(height: 1)
 
-                Text("MEET YOUR PARTY")
+                Text(isGuest ? "ACHIEVEMENTS" : "EARNED ACHIEVEMENTS")
                     .font(ProfileStyle.title(13))
                     .tracking(1)
                     .fixedSize()
@@ -578,43 +511,89 @@ struct PlayerProfileView: View {
             }
             .padding(.horizontal, 6)
 
-            HStack(
-                alignment: .bottom,
-                spacing: 0
-            ) {
-                Image("knight full")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity)
-                    .scaleEffect(1.12)
+            if isGuest {
+                HStack(spacing: 14) {
+                    ForEach(BattleAchievement.allCases) { achievement in
+                        ZStack {
+                            Image(systemName: achievement.icon)
+                                .font(.system(size: 26, weight: .semibold))
+                                .foregroundStyle(ProfileStyle.brown)
+                                .frame(width: 48, height: 48)
+                                .background(
+                                    ProfileStyle.background,
+                                    in: Circle()
+                                )
+                                .opacity(0.32)
 
-                Image("vampire full")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity)
-                    .scaleEffect(1.18)
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(ProfileStyle.brown)
+                                .padding(5)
+                                .background(
+                                    ProfileStyle.paper,
+                                    in: Circle()
+                                )
+                                .overlay {
+                                    Circle()
+                                        .stroke(ProfileStyle.line, lineWidth: 1)
+                                }
+                                .offset(x: 15, y: 15)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
 
-                Image("boom full")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity)
-                    .scaleEffect(1.15)
+                Text("Log in and earn these trophies.")
+                    .font(.system(size: 14, weight: .semibold, design: .serif))
+                    .italic()
+                    .multilineTextAlignment(.center)
+            } else if earned.isEmpty {
+                HStack(spacing: 14) {
+                    ForEach(BattleAchievement.allCases) { achievement in
+                        Image(systemName: achievement.icon)
+                            .font(.system(size: 24))
+                            .foregroundStyle(ProfileStyle.brown.opacity(0.3))
+                            .frame(width: 44, height: 44)
+                            .background(ProfileStyle.background, in: Circle())
+                    }
+                }
+
+                Text("No trophies earned yet—win battles to unlock them.")
+                    .font(.system(size: 14, design: .serif))
+                    .italic()
+                    .multilineTextAlignment(.center)
+            } else {
+                HStack(spacing: 14) {
+                    ForEach(earned) { achievement in
+                        VStack(spacing: 6) {
+                            Image(systemName: achievement.icon)
+                                .font(.system(size: 26, weight: .bold))
+                                .foregroundStyle(ProfileStyle.brown)
+                                .frame(width: 48, height: 48)
+                                .background(
+                                    ProfileStyle.background,
+                                    in: Circle()
+                                )
+                                .overlay {
+                                    Circle()
+                                        .stroke(ProfileStyle.line, lineWidth: 1.2)
+                                }
+
+                            Text(achievement.title)
+                                .font(.caption2.weight(.semibold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+
+                Text("\(earned.count) of \(BattleAchievement.allCases.count) trophies unlocked")
+                    .font(.system(size: 13, design: .serif))
+                    .italic()
             }
-            .frame(height: landscape ? 150 : 214)
-            .padding(.horizontal, 8)
-
-            Text("Three idiots. One exhausted healer.")
-                .font(
-                    .system(
-                        size: 14,
-                        design: .serif
-                    )
-                )
-                .italic()
         }
-        .foregroundStyle(
-            ProfileStyle.brown.opacity(0.82)
-        )
+        .foregroundStyle(ProfileStyle.brown.opacity(0.85))
         .padding(.horizontal, 14)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
@@ -775,34 +754,6 @@ private struct EditProfileScreen: View {
                         .font(.caption)
                     }
                 }
-                .padding(16)
-                .background(
-                    ProfileStyle.paper,
-                    in: RoundedRectangle(cornerRadius: 15)
-                )
-
-                VStack(
-                    alignment: .leading,
-                    spacing: 6
-                ) {
-                    Label(
-                        "Guest Profile",
-                        systemImage: "person.crop.circle"
-                    )
-                    .font(.headline)
-
-                    Text(
-                        "Guest profiles stay on this device. For registered accounts, nicknames and built-in avatar choices sync with Firestore; personal photos remain on this device. Battle records sync separately."
-                    )
-                    .font(.subheadline)
-                    .foregroundStyle(
-                        ProfileStyle.brown.opacity(0.72)
-                    )
-                }
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .leading
-                )
                 .padding(16)
                 .background(
                     ProfileStyle.paper,
@@ -1299,6 +1250,3 @@ private struct BattleAchievementsScreen: View {
         .environmentObject(AuthManager())
         .environmentObject(AppRouteState())
 }
-
-
-

@@ -146,37 +146,61 @@ struct MoveInspectOverlayView: View {
 
 struct PauseOverlayView: View {
     let compact: Bool
+    let onClose: () -> Void
     let onResume: () -> Void
+    let onOpenProfile: () -> Void
     let onOpenSettings: () -> Void
     let onOpenHowToPlay: () -> Void
     let onRequestExit: () -> Void
+
+    private let softExitText = Color(red: 0.62, green: 0.21, blue: 0.19)
+    private let softExitFill = Color(red: 0.96, green: 0.84, blue: 0.82)
+    private let softExitBorder = Color(red: 0.78, green: 0.42, blue: 0.39)
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 Color.black.opacity(0.56)
                     .ignoresSafeArea()
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        onClose()
+                    }
 
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: compact ? 9 : 15) {
-                        Image(systemName: "pause.circle.fill")
-                            .font(.system(size: compact ? 27 : 36))
+                    VStack(spacing: compact ? 8 : 13) {
+                        HStack {
+                            Spacer()
+
+                            Button(action: onClose) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(AppTheme.darkBrown)
+                                    .frame(width: 34, height: 34)
+                                    .background(AppTheme.backgroundTan, in: Circle())
+                                    .overlay {
+                                        Circle()
+                                            .stroke(AppTheme.darkBrown.opacity(0.45), lineWidth: 1.2)
+                                    }
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Close Pause Menu")
+                        }
+
 
                         Text("Game Paused")
-                            .font(.system(size: compact ? 25 : 29, weight: .bold, design: .serif))
+                            .font(.system(size: compact ? 23 : 28, weight: .bold, design: .serif))
 
-                        Text("Even heroes need a break.")
-                            .font(.system(size: 13, design: .serif))
-                            .italic()
-                            .foregroundStyle(AppTheme.darkBrown.opacity(0.7))
+                        Spacer()
 
-                        menuButton("Resume Game", icon: "play.fill", prominent: true, action: onResume)
+                        menuButton("Resume Game", icon: "play.fill", style: .primary, action: onResume)
+                        menuButton("Player Profile", icon: "person.crop.circle.fill", action: onOpenProfile)
                         menuButton("Settings", icon: "gearshape.fill", action: onOpenSettings)
-                        menuButton("How to Play", icon: "book.closed.fill", action: onOpenHowToPlay)
-                        menuButton("Return Home", icon: "house.fill", action: onRequestExit)
+                        menuButton("Rulebook", icon: "book.closed.fill", action: onOpenHowToPlay)
+                        menuButton("Return Home", icon: "house.fill", style: .destructive, action: onRequestExit)
                     }
                     .foregroundStyle(AppTheme.darkBrown)
-                    .padding(compact ? 15 : 22)
+                    .padding(compact ? 14 : 20)
                     .frame(maxWidth: 420)
                     .background(AppTheme.paper, in: RoundedRectangle(cornerRadius: 20))
                     .overlay {
@@ -192,13 +216,37 @@ struct PauseOverlayView: View {
         }
     }
 
+    private enum MenuButtonStyleKind {
+        case standard
+        case primary
+        case destructive
+    }
+
     private func menuButton(
         _ title: String,
         icon: String,
-        prominent: Bool = false,
+        style: MenuButtonStyleKind = .standard,
         action: @escaping () -> Void
     ) -> some View {
-        Button(action: action) {
+        let foreground: Color = switch style {
+        case .standard: AppTheme.darkBrown
+        case .primary: .white
+        case .destructive: softExitText
+        }
+
+        let fill: Color = switch style {
+        case .standard: AppTheme.backgroundTan
+        case .primary: AppTheme.darkBrown
+        case .destructive: softExitFill
+        }
+
+        let borderColor: Color = switch style {
+        case .standard: AppTheme.darkBrown.opacity(0.4)
+        case .primary: .clear
+        case .destructive: softExitBorder
+        }
+
+        return Button(action: action) {
             HStack(spacing: 11) {
                 Image(systemName: icon)
                     .font(.system(size: 16))
@@ -209,21 +257,18 @@ struct PauseOverlayView: View {
 
                 Spacer(minLength: 4)
 
-                if !prominent {
+                if style == .standard {
                     Image(systemName: "chevron.right")
                         .font(.caption.bold())
                 }
             }
-            .foregroundStyle(prominent ? Color.white : AppTheme.darkBrown)
+            .foregroundStyle(foreground)
             .padding(.horizontal, 15)
-            .frame(height: compact ? 40 : 49)
-            .background(
-                prominent ? AppTheme.darkBrown : AppTheme.backgroundTan,
-                in: RoundedRectangle(cornerRadius: 12)
-            )
+            .frame(height: compact ? 38 : 47)
+            .background(fill, in: RoundedRectangle(cornerRadius: 12))
             .overlay {
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppTheme.darkBrown.opacity(prominent ? 0 : 0.4), lineWidth: 1)
+                    .stroke(borderColor, lineWidth: 1.2)
             }
         }
         .buttonStyle(.plain)
