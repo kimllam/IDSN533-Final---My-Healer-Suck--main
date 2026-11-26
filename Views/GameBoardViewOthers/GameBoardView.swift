@@ -451,11 +451,7 @@ struct GameBoardView: View {
                     Capsule().stroke(AppTheme.darkBrown, lineWidth: 1.5)
                 }
 
-            Text("Hold a card (0.5s) or tap its ? for details")
-                .font(.system(size: compact ? 10 : 12, weight: .medium, design: .rounded))
-                .foregroundStyle(AppTheme.darkBrown)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
+           
 
             Spacer(minLength: 4)
 

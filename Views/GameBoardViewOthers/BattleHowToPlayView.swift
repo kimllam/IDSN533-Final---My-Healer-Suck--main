@@ -1,5 +1,6 @@
 //
 //  BattleHowToPlayView.swift
+//  should be change to "Rulebook"
 //  IDSN533 MyHealerSuck
 //
 //  Created by Kim Lam on 11/25/26.

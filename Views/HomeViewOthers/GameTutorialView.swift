@@ -5,16 +5,17 @@
 //  Created by Kim Lam on 11/25/26.
 //
 
-
 import SwiftUI
 
 // MARK: - First Play Guided Tutorial
 
 struct GameTutorialView: View {
     var onCompleted: () -> Void = {}
+
     init(onCompleted: @escaping () -> Void = {}) {
         self.onCompleted = onCompleted
     }
+
     @Environment(\.dismiss) private var dismiss
 
     @State private var step = 0
@@ -22,7 +23,6 @@ struct GameTutorialView: View {
     @State private var practiceComplete = false
     @State private var cardOffset: CGSize = .zero
     @State private var isCardPressed = false
-
 
     private let titles = [
         "Your Team Needs a Healer",
@@ -53,11 +53,8 @@ struct GameTutorialView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let landscape =
-                geometry.size.width > geometry.size.height
-
-            let compact =
-                geometry.size.height < 440
+            let landscape = geometry.size.width > geometry.size.height
+            let compact = geometry.size.height < 440
 
             let sidePadding: CGFloat = landscape
                 ? max(96, geometry.safeAreaInsets.leading + 34)
@@ -147,6 +144,7 @@ struct GameTutorialView: View {
                             AppTheme.darkBrown.opacity(0.55),
                             lineWidth: 1.6
                         )
+                        .allowsHitTesting(false)
                 }
                 .shadow(
                     color: AppTheme.darkBrown.opacity(0.22),
@@ -190,17 +188,24 @@ struct GameTutorialView: View {
 
             Spacer(minLength: 0)
 
-            Button("Skip Tutorial") {
+            Button {
+                onCompleted()
                 dismiss()
+            } label: {
+                Text("Skip Tutorial")
+                    .font(
+                        .system(
+                            size: compact ? 12 : 14,
+                            weight: .bold
+                        )
+                    )
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
             }
-            .font(
-                .system(
-                    size: compact ? 12 : 14,
-                    weight: .bold
-                )
-            )
             .buttonStyle(.plain)
-        }.foregroundStyle(AppTheme.darkBrown)
+        }
+        .foregroundStyle(AppTheme.darkBrown)
     }
 
     private func explanation(compact: Bool) -> some View {
@@ -290,43 +295,45 @@ struct GameTutorialView: View {
     private func footer(compact: Bool) -> some View {
         HStack(spacing: 12) {
             if step > 0 {
-                Button("Back") {
-                    withAnimation(
-                        .easeInOut(duration: 0.2)
-                    ) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
                         step -= 1
                     }
+                } label: {
+                    Text("Back")
+                        .frame(maxWidth: .infinity)
+                        .frame(height: compact ? 42 : 49)
+                        .foregroundStyle(AppTheme.darkBrown)
+                        .background(AppTheme.backgroundTan, in: Capsule())
+                        .contentShape(Capsule())
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: compact ? 42 : 49)
-                .foregroundStyle(AppTheme.darkBrown)
-                .background(AppTheme.backgroundTan, in: Capsule())
+                .buttonStyle(.plain)
             }
 
-            Button(
-                step == 4 ? "Start Battle" : "Next Step"
-            ) {
+            Button {
                 if step == 4 {
                     onCompleted()
                     dismiss()
                 } else {
-                    withAnimation(
-                        .easeInOut(duration: 0.2)
-                    ) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
                         step += 1
                     }
                 }
+            } label: {
+                Text(step == 4 ? "Start Battle" : "Next Step")
+                    .frame(maxWidth: .infinity)
+                    .frame(height: compact ? 42 : 49)
+                    .foregroundStyle(AppTheme.paper)
+                    .background(
+                        canAdvance
+                        ? AppTheme.darkBrown
+                        : AppTheme.darkBrown.opacity(0.40),
+                        in: Capsule()
+                    )
+                    .contentShape(Capsule())
             }
+            .buttonStyle(.plain)
             .disabled(!canAdvance)
-            .frame(maxWidth: .infinity)
-            .frame(height: compact ? 42 : 49)
-            .foregroundStyle(AppTheme.paper)
-            .background(
-                canAdvance
-                ? AppTheme.darkBrown
-                : AppTheme.darkBrown.opacity(0.40),
-                in: Capsule()
-            )
             .accessibilityHint(
                 canAdvance
                     ? "Continue the tutorial"
@@ -339,7 +346,6 @@ struct GameTutorialView: View {
                 weight: .bold
             )
         )
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -394,49 +400,34 @@ struct GameTutorialView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(height: height * 0.70)
-                        .scaleEffect(
-                            isCardPressed ? 0.96 : 1
-                        )
+                        .scaleEffect(isCardPressed ? 0.96 : 1)
                         .contentShape(Rectangle())
                         .onLongPressGesture(
                             minimumDuration: 0.5,
                             pressing: { isPressing in
-                                withAnimation(
-                                    .easeOut(duration: 0.12)
-                                ) {
+                                withAnimation(.easeOut(duration: 0.12)) {
                                     isCardPressed = isPressing
                                 }
                             },
                             perform: {
-                                withAnimation(
-                                    .spring(response: 0.25)
-                                ) {
+                                withAnimation(.spring(response: 0.25)) {
                                     inspectedCard = true
                                 }
                             }
                         )
-                        .accessibilityLabel(
-                            "Heal card, hold to inspect"
-                        )
+                        .accessibilityLabel("Heal card, hold to inspect")
 
                     Button {
-                        withAnimation(
-                            .spring(response: 0.25)
-                        ) {
+                        withAnimation(.spring(response: 0.25)) {
                             inspectedCard = true
                         }
                     } label: {
-                        Image(
-                            systemName: "questionmark.circle.fill"
-                        )
-                        .font(
-                            .system(
-                                size: 27,
-                                weight: .bold
-                            )
-                        )
-                        .foregroundStyle(AppTheme.darkBrown)
-                        .background(AppTheme.paper, in: Circle())
+                        Image(systemName: "questionmark.circle.fill")
+                            .font(.system(size: 27, weight: .bold))
+                            .foregroundStyle(AppTheme.darkBrown)
+                            .background(AppTheme.paper, in: Circle())
+                            .padding(4)
+                            .contentShape(Circle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Inspect Heal card")
@@ -464,10 +455,7 @@ struct GameTutorialView: View {
 
         case 3:
             GeometryReader { geo in
-                let cardWidth = min(
-                    geo.size.width * 0.23,
-                    105.0
-                )
+                let cardWidth = min(geo.size.width * 0.23, 105.0)
 
                 HStack(spacing: 12) {
                     Image("heal card")
@@ -477,6 +465,7 @@ struct GameTutorialView: View {
                             width: cardWidth,
                             height: height * 0.75
                         )
+                        .contentShape(Rectangle())
                         .offset(cardOffset)
                         .zIndex(2)
                         .gesture(
@@ -485,57 +474,32 @@ struct GameTutorialView: View {
                                     cardOffset = value.translation
                                 }
                                 .onEnded { value in
-                                    // Accept drops into the teammate area.
-                                    if value.translation.width
-                                        > geo.size.width * 0.24 {
-
-                                        withAnimation(
-                                            .spring(response: 0.3)
-                                        ) {
+                                    if value.translation.width > geo.size.width * 0.24 {
+                                        withAnimation(.spring(response: 0.3)) {
                                             practiceComplete = true
                                         }
                                     }
 
-                                    withAnimation(
-                                        .spring(response: 0.3)
-                                    ) {
+                                    withAnimation(.spring(response: 0.3)) {
                                         cardOffset = .zero
                                     }
                                 }
                         )
-                        .accessibilityLabel(
-                            "Drag Heal card to the teammate"
-                        )
+                        .accessibilityLabel("Drag Heal card to the teammate")
 
                     Image(systemName: "arrow.right")
-                        .font(
-                            .system(
-                                size: 25,
-                                weight: .bold
-                            )
-                        )
+                        .font(.system(size: 25, weight: .bold))
                         .foregroundStyle(AppTheme.darkBrown)
 
                     VStack(spacing: 5) {
                         Image("knight head")
                             .resizable()
                             .scaledToFit()
-                            .frame(
-                                maxHeight: height * 0.46
-                            )
+                            .frame(maxHeight: height * 0.46)
 
-                        Text(
-                            practiceComplete
-                                ? "ASSIGNED!"
-                                : "DROP HERE"
-                        )
-                        .font(
-                            .system(
-                                size: 11,
-                                weight: .heavy
-                            )
-                        )
-                        .foregroundStyle(AppTheme.darkBrown)
+                        Text(practiceComplete ? "ASSIGNED!" : "DROP HERE")
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundStyle(AppTheme.darkBrown)
                     }
                     .frame(
                         maxWidth: .infinity,
@@ -543,9 +507,7 @@ struct GameTutorialView: View {
                     )
                     .background(
                         practiceComplete ? AppTheme.softGreen : AppTheme.paper,
-                        in: RoundedRectangle(
-                            cornerRadius: 14
-                        )
+                        in: RoundedRectangle(cornerRadius: 14)
                     )
                     .overlay {
                         RoundedRectangle(cornerRadius: 14)
@@ -556,6 +518,7 @@ struct GameTutorialView: View {
                                     dash: [6, 5]
                                 )
                             )
+                            .allowsHitTesting(false)
                     }
                 }
                 .padding(16)

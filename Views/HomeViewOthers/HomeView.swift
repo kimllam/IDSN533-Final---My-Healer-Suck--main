@@ -417,7 +417,7 @@ struct HomeView: View {
             showHowToPlay = true
         } label: {
 
-            Text("How to Play")
+            Text("Rulebook")
                 .font(
                     .system(
                         size: 18,
