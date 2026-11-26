@@ -1,9 +1,4 @@
-//
-//  RootView.swift
-//  IDSN533 MyHealerSuck
-//
-//  Created by Kim Lam on 11/25/26.
-//
+
 
 import SwiftUI
 import FirebaseAuth
@@ -75,14 +70,38 @@ struct RootView: View {
         .animation(.easeInOut(duration: 0.25), value: justFinishedOnboarding)
         .animation(.easeInOut(duration: 0.25), value: isAuthenticated || isGuest)
         .onAppear {
+            // Restore an explicitly selected guest session without mixing account data.
+            if entryMode == "guest" {
+                isGuest = true
+                isAuthenticated = false
+            }
             guard authListenerHandle == nil else { return }
             authListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
-                if let user, user.isEmailVerified {
+                if entryMode == "guest" {
+                    isAuthenticated = false
+                    isGuest = true
+                } else if let user, user.isEmailVerified {
+                    entryMode = "account"
                     isAuthenticated = true
                     isGuest = false
                 } else {
                     isAuthenticated = false
+                    isGuest = false
+                    if entryMode == "account" { entryMode = "" }
                 }
+            }
+        }
+        .onChange(of: entryMode) { _, newMode in
+            if newMode == "guest" {
+                isGuest = true
+                isAuthenticated = false
+            } else if newMode == "account",
+                      Auth.auth().currentUser?.isEmailVerified == true {
+                isAuthenticated = true
+                isGuest = false
+            } else if newMode.isEmpty {
+                isAuthenticated = false
+                isGuest = false
             }
         }
         .onDisappear {
@@ -93,3 +112,4 @@ struct RootView: View {
         }
     }
 }
+

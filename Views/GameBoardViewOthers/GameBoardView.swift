@@ -1,9 +1,4 @@
-//
-//  GameBoardView.swift
-//  IDSN533 MyHealerSuck
-//
-//  Created by Kim Lam on 11/11/26.
-//
+
 
 import SwiftUI
 import UIKit
@@ -292,7 +287,9 @@ struct GameBoardView: View {
                 knownAchievements = []
             }
 
-            showFirstTimeTutorial = true
+            // Only guests see the tutorial automatically.
+            // Verified account users enter gameplay directly.
+            showFirstTimeTutorial = !isRegisteredPlayer
         }
         .onDisappear {
             AudioManager.shared.stopAmbient()
@@ -759,3 +756,4 @@ struct GameBoardView: View {
             .environmentObject(AppRouteState())
     }
 }
+

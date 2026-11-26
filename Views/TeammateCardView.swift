@@ -40,6 +40,7 @@ struct TeammateCardView: View {
             VStack(spacing: compact ? 5 : 9) {
 
                 characterHeader(narrow: narrow)
+                    .frame(height: compact ? 56 : 66, alignment: .center)
 
                 if teammate.isGhost {
                     ghostContent(compact: compact)
@@ -181,7 +182,7 @@ struct TeammateCardView: View {
 
             VStack(
                 alignment: .leading,
-                spacing: 4
+                spacing: 3
             ) {
                 Text(teammate.name)
                     .font(
@@ -193,11 +194,9 @@ struct TeammateCardView: View {
                     )
                     .foregroundStyle(darkBrownText)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.9)
-                    .fixedSize(
-                        horizontal: false,
-                        vertical: true
-                    )
+                    .minimumScaleFactor(0.75)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 HStack(spacing: 6) {
                     HStack(spacing: 2) {
@@ -245,40 +244,45 @@ struct TeammateCardView: View {
     private func ghostContent(
         compact: Bool
     ) -> some View {
-        VStack(spacing: 7) {
+        VStack(spacing: compact ? 4 : 6) {
             Spacer(minLength: 0)
 
             if let card = game.stolenCards[teammate.id] {
                 GhostWithStolenCard(card: card)
+                    .scaleEffect(compact ? 0.82 : 1)
+                    .frame(height: compact ? 73 : 85)
                     .opacity(game.pendingThefts.contains { $0.id == teammate.id } ? 0 : 1)
                     .anchorPreference(key: TheftAnchors.self, value: .bounds) {
                         [.panel(teammate.id): $0]
                     }
             } else {
-                Image("ghost").resizable().scaledToFit()
-                    .frame(maxHeight: compact ? 60 : 100)
+                Image("ghost")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: compact ? 60 : 90)
             }
 
-            Text("GHOST")
-                .font(
-                    .system(
-                        size: 15,
-                        weight: .bold,
-                        design: .serif
+            // Keep both status labels together and inside the card border.
+            VStack(spacing: 3) {
+                Text("GHOST")
+                    .font(
+                        .system(
+                            size: 15,
+                            weight: .bold,
+                            design: .serif
+                        )
                     )
-                )
-                .foregroundStyle(mediumBrown)
 
-            Text("Out of play")
-                .font(.system(size: 12))
-                .foregroundStyle(mediumBrown)
+                Text("Out of play")
+                    .font(.system(size: 12))
+            }
+            .foregroundStyle(mediumBrown)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
 
-            Spacer(minLength: 0)
+            Spacer(minLength: compact ? 8 : 12)
         }
-        .frame(
-            maxWidth: .infinity,
-            maxHeight: .infinity
-        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Healer Response Slot
@@ -509,3 +513,4 @@ struct GhostWithStolenCard: View {
         .accessibilityLabel("Ghost holding \(card.rawValue)")
     }
 }
+
