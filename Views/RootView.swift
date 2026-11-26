@@ -9,7 +9,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct RootView: View {
-    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = true
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 
     @State private var isAuthenticated = false
     @State private var isGuest = false
@@ -17,11 +17,11 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            // TODO: Uncomment when OnboardingComicView is built
-            // if !hasSeenOnboarding {
-            //     OnboardingComicView(onFinish: { hasSeenOnboarding = true })
-            // } else
-            if isAuthenticated || isGuest {
+            if !hasSeenOnboarding {
+                OnboardingComicView(onFinish: {
+                    hasSeenOnboarding = true
+                })
+            } else if isAuthenticated || isGuest {
                 NavigationStack {
                     HomeView(
                         isGuest: isGuest,

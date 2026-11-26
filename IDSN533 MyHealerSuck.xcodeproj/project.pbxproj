@@ -11,6 +11,7 @@
 		A6095E6830B7BA2400BBD89C /* BattleOverlaysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6095E6730B7BA2300BBD89C /* BattleOverlaysView.swift */; };
 		A6095E6A30B7BA5000BBD89C /* BattleHowToPlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6095E6930B7BA4F00BBD89C /* BattleHowToPlayView.swift */; };
 		A6095E6C30B7BAB300BBD89C /* GameOverOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6095E6B30B7BAB100BBD89C /* GameOverOverlayView.swift */; };
+		A6095E6E30B7C86B00BBD89C /* OnboardingComicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6095E6D30B7C86900BBD89C /* OnboardingComicView.swift */; };
 		A69B455430B78F760060EC65 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69B455330B78F720060EC65 /* RootView.swift */; };
 		A69B455A30B794D70060EC65 /* GameTutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69B455930B794D10060EC65 /* GameTutorialView.swift */; };
 		A69B455C30B794E30060EC65 /* HowToPlaySheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69B455B30B794DB0060EC65 /* HowToPlaySheetView.swift */; };
@@ -68,6 +69,7 @@
 		A6095E6730B7BA2300BBD89C /* BattleOverlaysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleOverlaysView.swift; sourceTree = "<group>"; };
 		A6095E6930B7BA4F00BBD89C /* BattleHowToPlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleHowToPlayView.swift; sourceTree = "<group>"; };
 		A6095E6B30B7BAB100BBD89C /* GameOverOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverOverlayView.swift; sourceTree = "<group>"; };
+		A6095E6D30B7C86900BBD89C /* OnboardingComicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingComicView.swift; sourceTree = "<group>"; };
 		A69B455330B78F720060EC65 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A69B455930B794D10060EC65 /* GameTutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTutorialView.swift; sourceTree = "<group>"; };
 		A69B455B30B794DB0060EC65 /* HowToPlaySheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToPlaySheetView.swift; sourceTree = "<group>"; };
@@ -212,6 +214,7 @@
 		A6F6E45730A5705B00C0CB1D /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A6095E6D30B7C86900BBD89C /* OnboardingComicView.swift */,
 				A6095E6130B7B9C200BBD89C /* GameBoardViewOthers */,
 				A69B455830B794BD0060EC65 /* HomeViewOthers */,
 				A69B455330B78F720060EC65 /* RootView.swift */,
@@ -372,6 +375,7 @@
 				A6F6E46330A5716900C0CB1D /* TeammateCardView.swift in Sources */,
 				AE8A444530AA52700054775D /* AuthManager.swift in Sources */,
 				A6F6E46230A5716500C0CB1D /* EncounterResolutionView.swift in Sources */,
+				A6095E6E30B7C86B00BBD89C /* OnboardingComicView.swift in Sources */,
 				A6095E6A30B7BA5000BBD89C /* BattleHowToPlayView.swift in Sources */,
 				A69B456630B796480060EC65 /* BattleGuideOptionsView.swift in Sources */,
 				A69B455430B78F760060EC65 /* RootView.swift in Sources */,
