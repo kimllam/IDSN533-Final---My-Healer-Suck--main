@@ -1,9 +1,11 @@
+
 //
 //  IDSN533_MyHealerSuckApp.swift
 //  IDSN533 MyHealerSuck
 //
 //  Created by Kim Lam on 11/11/26.
 //  Updated by Jingyi: Firebase authentication and navigation.
+//  Updated by Jingyi: Restore audio lifecycle management.
 //
 
 import SwiftUI
@@ -15,12 +17,19 @@ import UIKit
 
 @MainActor
 enum LandscapeOrientation {
+
     static func request() {
         for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
-            guard scene.activationState == .foregroundActive ||
-                  scene.activationState == .foregroundInactive else { continue }
 
-            scene.keyWindow?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+            guard scene.activationState == .foregroundActive ||
+                  scene.activationState == .foregroundInactive else {
+                continue
+            }
+
+            scene.keyWindow?
+                .rootViewController?
+                .setNeedsUpdateOfSupportedInterfaceOrientations()
+
             scene.requestGeometryUpdate(
                 .iOS(interfaceOrientations: .landscape)
             ) { error in
@@ -40,6 +49,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions:
             [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+
         if FirebaseApp.app() == nil {
             FirebaseApp.configure()
         }
@@ -48,6 +58,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     // Keep all app screens in landscape, including onboarding.
+
     func application(
         _ application: UIApplication,
         supportedInterfaceOrientationsFor window: UIWindow?
@@ -60,6 +71,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
 @MainActor
 final class AppRouteState: ObservableObject {
+
     @Published private(set) var rootID = UUID()
     @Published private(set) var showingAccountSelection = false
 
@@ -87,12 +99,12 @@ struct MyHealerSucksApp: App {
 
     @StateObject private var game = GameManager()
     @StateObject private var appRoute = AppRouteState()
-
     @StateObject private var authManager: AuthManager
 
     // MARK: - Initialization
 
     init() {
+
         // Configure Firebase before creating AuthManager.
         if FirebaseApp.app() == nil {
             FirebaseApp.configure()
@@ -104,23 +116,52 @@ struct MyHealerSucksApp: App {
     }
 
     // MARK: - Main Window
+
     var body: some Scene {
-            WindowGroup {
-                RootView()
-                    .environmentObject(game)
-                    .environmentObject(authManager)
-                    .environmentObject(appRoute)
-                    .onAppear {
+
+        WindowGroup {
+
+            RootView()
+                .environmentObject(game)
+                .environmentObject(authManager)
+                .environmentObject(appRoute)
+
+                // MARK: - Initial Appearance
+
+                .onAppear {
+
+                    LandscapeOrientation.request()
+
+                    // Initialize audio when the app is active.
+                    if scenePhase == .active {
+                        AudioManager.shared.setApplicationActive(true)
+                    }
+                }
+
+                // MARK: - App Lifecycle
+
+                .onChange(of: scenePhase) { _, newPhase in
+
+                    switch newPhase {
+
+                    case .active:
+
+                        // Restore landscape orientation.
                         LandscapeOrientation.request()
+
+                        // Resume background music and ambient audio.
+                        AudioManager.shared.setApplicationActive(true)
+
+                    case .inactive, .background:
+
+                        // Pause audio when leaving the foreground.
+                        AudioManager.shared.setApplicationActive(false)
+
+                    @unknown default:
+                        break
                     }
-                    .onChange(of: scenePhase) { _, newPhase in
-                        if newPhase == .active {
-                            LandscapeOrientation.request()
-                        }
-                    }
-            }
+                }
         }
     }
-
-
+}
 

@@ -187,8 +187,15 @@ struct AuthView: View {
                     } else {
                         HStack {
                             Spacer()
-                            
+
+                            Button(action: handleForgotPassword) {
+                                Text("Forgot password?")
+                                    .font(.system(size: compact ? 10 : 12, weight: .semibold))
+                                    .underline()
+                                    .foregroundStyle(AppTheme.darkBrown)
+                            }
                             .buttonStyle(.plain)
+                            .disabled(isLoading)
                         }
                     }
                 }
@@ -352,9 +359,34 @@ struct AuthView: View {
 
         Task { @MainActor in
             defer { isLoading = false }
-            entryMode = "account"
-            GameRecordStore.shared.refreshForCurrentAccount()
-            onAuthenticated()
+            do {
+                if isSignUpMode {
+                    // Create the Firebase user and send the verification email.
+                    try await auth.signUp(email: trimmedEmail, password: password)
+                    isErrorMessage = false
+                    statusMessage = "Account created. Check your email, verify your address, then log in."
+                    isSignUpMode = false
+                    confirmPassword = ""
+                    password = ""
+                    return
+                }
+
+                // Do not activate account mode until Firebase confirms the login.
+                try await auth.logIn(email: trimmedEmail, password: password)
+                let verified = try await auth.checkEmailVerification()
+                guard verified else {
+                    isErrorMessage = true
+                    statusMessage = "Please verify your email before playing with an account."
+                    return
+                }
+
+                entryMode = "account"
+                GameRecordStore.shared.refreshForCurrentAccount()
+                onAuthenticated()
+            } catch {
+                isErrorMessage = true
+                statusMessage = error.localizedDescription
+            }
         }
     }
 
@@ -367,15 +399,30 @@ struct AuthView: View {
         }
 
         Task { @MainActor in
-            isErrorMessage = false
-            statusMessage = "Password reset email sent."
+            do {
+                try await auth.resetPassword(email: trimmedEmail)
+                isErrorMessage = false
+                statusMessage = "Password reset email sent."
+            } catch {
+                isErrorMessage = true
+                statusMessage = error.localizedDescription
+            }
         }
     }
 
     private func handlePlayAsGuest() {
-        entryMode = "guest"
-        GameRecordStore.shared.refreshForCurrentAccount()
-        onPlayAsGuest()
+        // Guest play never inherits a registered Firebase session.
+        do {
+            if auth.isLoggedIn {
+                try auth.logOut()
+            }
+            entryMode = "guest"
+            GameRecordStore.shared.refreshForCurrentAccount()
+            onPlayAsGuest()
+        } catch {
+            isErrorMessage = true
+            statusMessage = error.localizedDescription
+        }
     }
 }
 
@@ -387,3 +434,4 @@ struct AuthView: View {
         .environmentObject(GameManager())
         .environmentObject(AppRouteState())
 }
+

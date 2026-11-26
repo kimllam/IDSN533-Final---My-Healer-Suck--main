@@ -1,10 +1,3 @@
-//
-//  RootView.swift
-//  IDSN533 MyHealerSuck
-//
-//  Created by Kim Lam on 11/25/26.
-//
-
 import SwiftUI
 import FirebaseAuth
 
@@ -43,17 +36,11 @@ struct RootView: View {
                         mode: .logIn,
                         onAuthenticated: {
                             justFinishedOnboarding = false
-
-                            if Auth.auth().currentUser?
-                                .isEmailVerified == true {
-
-                                isAuthenticated = true
-                                isGuest = false
-                            }
+                            finishAccountLogin()
                         },
                         onPlayAsGuest: {
                             justFinishedOnboarding = false
-                            isGuest = true
+                            enterGuestMode()
                         }
                     )
                 }
@@ -75,15 +62,10 @@ struct RootView: View {
                     AuthView(
                         mode: .logIn,
                         onAuthenticated: {
-                            if Auth.auth().currentUser?
-                                .isEmailVerified == true {
-
-                                isAuthenticated = true
-                                isGuest = false
-                            }
+                            finishAccountLogin()
                         },
                         onPlayAsGuest: {
-                            isGuest = true
+                            enterGuestMode()
                         }
                     )
                 }
@@ -110,25 +92,75 @@ struct RootView: View {
                 scenePhase == .active
             )
 
+            updateEntryState()
+
             guard authListenerHandle == nil else {
                 return
             }
 
             authListenerHandle = Auth.auth()
                 .addStateDidChangeListener { _, user in
-                    if let user, user.isEmailVerified {
+                    if entryMode == "guest" {
+                        isAuthenticated = false
+                        isGuest = true
+                    } else if let user, user.isEmailVerified {
+                        entryMode = "account"
                         isAuthenticated = true
                         isGuest = false
                     } else {
                         isAuthenticated = false
+                        isGuest = false
+
+                        if entryMode == "account" {
+                            entryMode = ""
+                        }
                     }
                 }
+        }
+        .onChange(of: entryMode) { _, _ in
+            updateEntryState()
         }
         .onDisappear {
             if let handle = authListenerHandle {
                 Auth.auth().removeStateDidChangeListener(handle)
                 authListenerHandle = nil
             }
+        }
+    }
+
+    // MARK: - Account Login
+
+    private func finishAccountLogin() {
+        guard Auth.auth().currentUser?.isEmailVerified == true else {
+            return
+        }
+
+        entryMode = "account"
+        isAuthenticated = true
+        isGuest = false
+    }
+
+    // MARK: - Guest Login
+
+    private func enterGuestMode() {
+        entryMode = "guest"
+        isGuest = true
+        isAuthenticated = false
+    }
+
+    // MARK: - Restore Entry State
+
+    private func updateEntryState() {
+        if entryMode == "guest" {
+            isGuest = true
+            isAuthenticated = false
+        } else if entryMode == "account",
+                  Auth.auth().currentUser?.isEmailVerified == true {
+            isAuthenticated = true
+            isGuest = false
+        } else {
+            isAuthenticated = false
+            isGuest = false
         }
     }
 }
