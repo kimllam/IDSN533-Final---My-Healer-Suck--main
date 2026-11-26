@@ -9,30 +9,44 @@ import SwiftUI
 import FirebaseAuth
 
 struct RootView: View {
-    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
-    @AppStorage("entryMode") private var entryMode = ""
+
+    @Environment(\.scenePhase)
+    private var scenePhase
+
+    @AppStorage("hasSeenOnboarding")
+    private var hasSeenOnboarding = false
+
+    @AppStorage("entryMode")
+    private var entryMode = ""
 
     @State private var justFinishedOnboarding = false
     @State private var isAuthenticated = false
     @State private var isGuest = false
-    @State private var authListenerHandle: AuthStateDidChangeListenerHandle?
+
+    @State private var authListenerHandle:
+        AuthStateDidChangeListenerHandle?
 
     var body: some View {
         Group {
             if !hasSeenOnboarding {
-                OnboardingComicView(onFinish: {
-                    hasSeenOnboarding = true
-                    justFinishedOnboarding = true
-                    isGuest = false
-                    entryMode = ""
-                })
+                OnboardingComicView(
+                    onFinish: {
+                        hasSeenOnboarding = true
+                        justFinishedOnboarding = true
+                        isGuest = false
+                        entryMode = ""
+                    }
+                )
             } else if justFinishedOnboarding {
                 NavigationStack {
                     AuthView(
                         mode: .logIn,
                         onAuthenticated: {
                             justFinishedOnboarding = false
-                            if Auth.auth().currentUser?.isEmailVerified == true {
+
+                            if Auth.auth().currentUser?
+                                .isEmailVerified == true {
+
                                 isAuthenticated = true
                                 isGuest = false
                             }
@@ -49,6 +63,7 @@ struct RootView: View {
                         isGuest: isGuest,
                         onExitGuest: {
                             isGuest = false
+
                             if entryMode == "guest" {
                                 entryMode = ""
                             }
@@ -60,7 +75,9 @@ struct RootView: View {
                     AuthView(
                         mode: .logIn,
                         onAuthenticated: {
-                            if Auth.auth().currentUser?.isEmailVerified == true {
+                            if Auth.auth().currentUser?
+                                .isEmailVerified == true {
+
                                 isAuthenticated = true
                                 isGuest = false
                             }
@@ -72,18 +89,40 @@ struct RootView: View {
                 }
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: justFinishedOnboarding)
-        .animation(.easeInOut(duration: 0.25), value: isAuthenticated || isGuest)
+        .animation(
+            .easeInOut(duration: 0.25),
+            value: justFinishedOnboarding
+        )
+        .animation(
+            .easeInOut(duration: 0.25),
+            value: isAuthenticated || isGuest
+        )
+        .onChange(
+            of: scenePhase,
+            initial: true
+        ) { _, phase in
+            AudioManager.shared.setApplicationActive(
+                phase == .active
+            )
+        }
         .onAppear {
-            guard authListenerHandle == nil else { return }
-            authListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
-                if let user, user.isEmailVerified {
-                    isAuthenticated = true
-                    isGuest = false
-                } else {
-                    isAuthenticated = false
-                }
+            AudioManager.shared.setApplicationActive(
+                scenePhase == .active
+            )
+
+            guard authListenerHandle == nil else {
+                return
             }
+
+            authListenerHandle = Auth.auth()
+                .addStateDidChangeListener { _, user in
+                    if let user, user.isEmailVerified {
+                        isAuthenticated = true
+                        isGuest = false
+                    } else {
+                        isAuthenticated = false
+                    }
+                }
         }
         .onDisappear {
             if let handle = authListenerHandle {
