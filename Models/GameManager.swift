@@ -249,9 +249,10 @@ class GameManager: ObservableObject {
             ) {
 
             HapticsManager.shared.damage()
-        } else if zip(teammates, previousHP).contains(
-            where: { $0.0.hp > $0.1 }
-        ) {
+        } else if bonkHP > previousBonkHP
+            || zip(teammates, previousHP).contains(
+                where: { $0.0.hp > $0.1 }
+            ) {
             HapticsManager.shared.heal()
         } else {
             HapticsManager.shared.cardPlaced()
@@ -310,9 +311,9 @@ class GameManager: ObservableObject {
         switch move.effect {
         case .attack(let dmg):
             if isReversed {
-                damageTeammate(actor, amount: dmg)
+                healBonk(amount: dmg)
                 resolutionBannerText =
-                    "Reverse sends \(dmg) damage to \(actor.name)!"
+                    "Reverse turns \(actor.name)'s attack into +\(dmg) HP for Bonk!"
             } else {
                 damageBonk(amount: dmg)
                 resolutionBannerText =
@@ -321,9 +322,9 @@ class GameManager: ObservableObject {
 
         case .mightySwing:
             if isReversed {
-                damageTeammate(actor, amount: 2)
+                healBonk(amount: 2)
                 resolutionBannerText =
-                    "Reverse redirects Mighty Swing (2 dmg) to Knight!"
+                    "Reverse turns Mighty Swing into +2 HP for Bonk!"
             } else {
                 damageBonk(amount: 2)
                 resolutionBannerText =
@@ -332,9 +333,9 @@ class GameManager: ObservableObject {
 
         case .rally:
             if isReversed {
-                damageTeammate(actor, amount: 3)
+                healBonk(amount: 3)
                 resolutionBannerText =
-                    "Reverse sends Rally (3 dmg) straight to Knight!"
+                    "Reverse turns Rally into +3 HP for Bonk!"
             } else {
                 damageBonk(amount: 3)
                 resolutionBannerText =
@@ -343,9 +344,12 @@ class GameManager: ObservableObject {
 
         case .bigBomb:
             if isReversed {
-                damageBonk(amount: 1)
+                for ally in livingTeammates {
+                    healTeammate(ally, amount: 1)
+                }
+
                 resolutionBannerText =
-                    "Reverse redirects BIG Bomb to Bonk for 1 damage!"
+                    "Reverse turns BIG Bomb into +1 HP for all living allies!"
             } else {
                 for ally in livingTeammates {
                     damageTeammate(ally, amount: 1)
@@ -381,9 +385,12 @@ class GameManager: ObservableObject {
 
             if isHeads {
                 if isReversed {
-                    damageBonk(amount: 1)
+                    for ally in livingTeammates {
+                        healTeammate(ally, amount: 1)
+                    }
+
                     resolutionBannerText =
-                        "Heads + Reverse! Bonk takes 1 damage!"
+                        "Heads + Reverse! Miscalculation heals all living allies for 1!"
                 } else {
                     for ally in livingTeammates {
                         damageTeammate(ally, amount: 1)
@@ -410,9 +417,9 @@ class GameManager: ObservableObject {
 
             if isHeads {
                 if isReversed {
-                    damageBonk(amount: 1)
+                    healTeammate(targetAlly, amount: 1)
                     resolutionBannerText =
-                        "Heads + Reverse! Hot Potato hits Bonk for 1!"
+                        "Heads + Reverse! Hot Potato heals \(targetAlly.name) for 1!"
                 } else {
                     damageTeammate(targetAlly, amount: 1)
                     resolutionBannerText =
@@ -420,9 +427,9 @@ class GameManager: ObservableObject {
                 }
             } else {
                 if isReversed {
-                    damageTeammate(targetAlly, amount: 1)
+                    healBonk(amount: 1)
                     resolutionBannerText =
-                        "Tails + Reverse! Hot Potato bounces to \(targetAlly.name)!"
+                        "Tails + Reverse! Hot Potato heals Bonk for 1!"
                 } else {
                     damageBonk(amount: 1)
                     resolutionBannerText =
@@ -432,9 +439,9 @@ class GameManager: ObservableObject {
 
         case .noodleLegs, .explosiveApology:
             if isReversed {
-                damageBonk(amount: 2)
+                healTeammate(actor, amount: 2)
                 resolutionBannerText =
-                    "Reverse sends 2 self-damage straight to Bonk!"
+                    "Reverse turns self-damage into +2 HP for \(actor.name)!"
             } else {
                 damageTeammate(actor, amount: 2)
                 resolutionBannerText =
@@ -443,9 +450,9 @@ class GameManager: ObservableObject {
 
         case .oopsTheresARock:
             if isReversed {
-                damageBonk(amount: 1)
+                healTeammate(actor, amount: 1)
                 resolutionBannerText =
-                    "Reverse flings the rock at Bonk for 1 damage!"
+                    "Reverse turns the rock trip into +1 HP for \(actor.name)!"
             } else {
                 damageTeammate(actor, amount: 1)
                 resolutionBannerText =
@@ -454,10 +461,10 @@ class GameManager: ObservableObject {
 
         case .bodySlam:
             if isReversed {
-                damageTeammate(actor, amount: 1)
-                damageBonk(amount: 1)
+                healBonk(amount: 1)
+                healTeammate(actor, amount: 1)
                 resolutionBannerText =
-                    "Reverse swaps Body Slam targets!"
+                    "Reverse turns Body Slam into +1 HP for both Bonk and Knight!"
             } else {
                 damageBonk(amount: 1)
                 damageTeammate(actor, amount: 1)
@@ -471,9 +478,9 @@ class GameManager: ObservableObject {
             ) ?? actor
 
             if isReversed {
-                damageBonk(amount: 1)
+                healTeammate(targetAlly, amount: 1)
                 resolutionBannerText =
-                    "Reverse redirects Missed Throw to Bonk!"
+                    "Reverse turns Missed Throw into +1 HP for \(targetAlly.name)!"
             } else {
                 damageTeammate(targetAlly, amount: 1)
                 resolutionBannerText =
@@ -486,10 +493,10 @@ class GameManager: ObservableObject {
             ) ?? actor
 
             if isReversed {
-                damageBonk(amount: 1)
-                healTeammate(actor, amount: 1)
+                healTeammate(targetAlly, amount: 1)
+                damageTeammate(actor, amount: 1)
                 resolutionBannerText =
-                    "Reverse redirects Omnivamp bite to Bonk!"
+                    "Reverse flips Omnivamp: \(targetAlly.name) heals 1 and Vampire takes 1!"
             } else {
                 damageTeammate(targetAlly, amount: 1)
                 healTeammate(actor, amount: 1)
@@ -633,6 +640,21 @@ class GameManager: ObservableObject {
         }
     }
 
+    private func healBonk(amount: Int) {
+        let previousHP = bonkHP
+        bonkHP = min(5, bonkHP + amount)
+        guard bonkHP > previousHP else { return }
+
+        AudioManager.shared.playEffect(named: "heal")
+        bonkDamagePopup = "+\(amount) ♥"
+
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + 0.6
+        ) {
+            self.bonkDamagePopup = nil
+        }
+    }
+
     // MARK: - Win and Loss Checks
 
     @discardableResult
@@ -702,3 +724,4 @@ class GameManager: ObservableObject {
         inspectedTeammate = nil
     }
 }
+

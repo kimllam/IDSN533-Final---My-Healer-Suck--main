@@ -5,294 +5,369 @@
 //  Created by Kim Lam on 11/25/26.
 //
 
-
 import SwiftUI
-
-// MARK: - Responsive Tutorial Layout
-// Original gameplay instructions are preserved.
 
 struct HowToPlaySheetView: View {
 
     @Environment(\.dismiss)
     private var dismiss
 
-    // MARK: - Main Layout
-
     var body: some View {
-        GeometryReader { geometry in
+        ZStack(alignment: .topTrailing) {
+            AppTheme.backgroundTan
+                .ignoresSafeArea()
 
-            let compact = geometry.size.height < 410
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 22) {
 
-            ZStack {
-                AppTheme.backgroundTan
-                    .ignoresSafeArea()
+                    // MARK: - Rulebook Header
 
-                ScrollView(
-                    .vertical,
-                    showsIndicators: false
-                ) {
-                    VStack(
-                        spacing: compact ? 12 : 20
-                    ) {
+                    VStack(spacing: 10) {
+                        Text("The Rulebook")
+                            .font(.system(size: 32, weight: .black, design: .serif))
 
-                        // MARK: - Tutorial Header
+                        HStack(spacing: 12) {
+                            Rectangle()
+                                .fill(AppTheme.outline)
+                                .frame(height: 1)
 
-                        VStack(spacing: 10) {
-
-                            Text("How to Play")
-                                .font(
-                                    .system(
-                                        size: compact ? 26 : 32,
-                                        weight: .black,
-                                        design: .serif
-                                    )
-                                )
-
-                            HStack(spacing: 12) {
-
-                                Rectangle()
-                                    .fill(AppTheme.outline)
-                                    .frame(height: 1)
-
-                                Image(
-                                    systemName: "swords"
-                                )
+                            Image(systemName: "swords")
                                 .font(.system(size: 18))
 
-                                Rectangle()
-                                    .fill(AppTheme.outline)
-                                    .frame(height: 1)
-                            }
-                            .padding(.horizontal, 16)
+                            Rectangle()
+                                .fill(AppTheme.outline)
+                                .frame(height: 1)
                         }
+                        .padding(.horizontal, 24)
+                    }
 
-                        // MARK: - Story and Cards
+                    // MARK: - The Story
 
-                        VStack(
-                            alignment: .leading,
-                            spacing: compact ? 8 : 12
-                        ) {
-                            Text("The Story")
-                                .font(
-                                    .system(
-                                        size: 19,
-                                        weight: .bold,
-                                        design: .serif
-                                    )
-                                )
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionTitle("The Story")
 
-                            Text(
-                                "You are the healer of three dangerously reckless teammates. Survive their terrible decisions and defeat Bonk before two teammates turn into ghosts."
-                            )
-                            .font(
-                                .system(
-                                    size: compact ? 12 : 14
-                                )
-                            )
-                            .fixedSize(
-                                horizontal: false,
-                                vertical: true
-                            )
-
-                            Text("Your Cards")
-                                .font(
-                                    .system(
-                                        size: 19,
-                                        weight: .bold,
-                                        design: .serif
-                                    )
-                                )
-
-                            HStack(
-                                alignment: .top,
-                                spacing: 8
-                            ) {
-                                guideCard(
-                                    "heal card",
-                                    title: "Heal",
-                                    note: "+1 HP"
-                                )
-
-                                guideCard(
-                                    "reverse card",
-                                    title: "Reverse",
-                                    note: "Redirect damage"
-                                )
-
-                                guideCard(
-                                    "nothing card",
-                                    title: "Do Nothing",
-                                    note: "No intervention"
-                                )
-                            }
-
-                            Text("Your Team")
-                                .font(
-                                    .system(
-                                        size: 19,
-                                        weight: .bold,
-                                        design: .serif
-                                    )
-                                )
-
-                            HStack(
-                                alignment: .top,
-                                spacing: 8
-                            ) {
-                                guideCard(
-                                    "vampire head",
-                                    title: "Vampire",
-                                    note: "Risky ally attacks"
-                                )
-
-                                guideCard(
-                                    "knight head",
-                                    title: "Knight",
-                                    note: "Powerful but reckless"
-                                )
-
-                                guideCard(
-                                    "boom head",
-                                    title: "Dr. Boom Boom",
-                                    note: "Unpredictable bombs"
-                                )
-                            }
-
-                            Text(
-                                "Tap a teammate to inspect their possible moves. Drag a healer card from your hand onto a living teammate, then start the encounter. Use the pause menu or the ? button to reopen this guide anytime."
-                            )
-                            .font(
-                                .system(
-                                    size: compact ? 12 : 14
-                                )
-                            )
-                            .fixedSize(
-                                horizontal: false,
-                                vertical: true
-                            )
-                        }
-                        .frame(
-                            maxWidth: .infinity,
-                            alignment: .leading
+                        Text(
+                            "There’s only one way out but Bonk is standing in the way. The guild believes they must defeat him to escape. There’s just one problem..."
                         )
+                        .font(.system(size: 14))
+                        .fixedSize(horizontal: false, vertical: true)
 
-                        // MARK: - Gameplay Rules
+                        Text("All of Your Teammates Have a Death Wish.")
+                            .font(.system(size: 16, weight: .bold, design: .serif))
+                            .italic()
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 14)
+                            .background(
+                                AppTheme.paper,
+                                in: RoundedRectangle(cornerRadius: 10)
+                            )
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(AppTheme.outline.opacity(0.55), lineWidth: 1)
+                            }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                        VStack(
-                            spacing: compact ? 8 : 12
-                        ) {
+                    // MARK: - The Healer (player)
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        sectionTitle("You, the Healer")
+
+                        // Healer Image + Intro
+                        HStack(alignment: .center, spacing: 16) {
+                            Image("healer")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 84, height: 84)
+                                .padding(8)
+                                .background(
+                                    AppTheme.paper,
+                                    in: RoundedRectangle(cornerRadius: 14)
+                                )
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(AppTheme.outline.opacity(0.55), lineWidth: 1)
+                                }
+
+                            Text(
+                                "You’re stuck keeping three reckless teammates alive. In order to defeat Bonk, you must keep 2 idiots alive. If 2 dies, you lose!"
+                            )
+                            .font(.system(size: 14))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        // Larger Vertically Aligned Healer Cards
+                        HStack(alignment: .top, spacing: 4) {
+                            healerActionCard(
+                                image: "heal card",
+                                title: "Heal",
+                                description: "+1HP"
+                            )
+
+                            healerActionCard(
+                                image: "reverse card",
+                                title: "Reverse",
+                                description: "Flip the actions \n heal ↔ harm"
+                            )
+
+                            healerActionCard(
+                                image: "nothing card",
+                                title: "Do Nothing",
+                                description: "Sit there and watch them fail"
+                            )
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    // MARK: - The Characters
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        sectionTitle("The Characters")
+
+                        HStack(alignment: .top, spacing: 12) {
+                            // Left Stack: Three Idiots
+                            VStack(spacing: 10) {
+                                characterRowCard(
+                                    image: "vampire head",
+                                    title: "Stumbling Vampire Assassin",
+                                    description: "Deadly aim but also terrible aim. \n\nHis hit depends on a spinning wheel because he literally can’t control where his knives go."
+                                )
+
+                                characterRowCard(
+                                    image: "knight head",
+                                    title: "Super Hungry Knight",
+                                    description: "His real enemy? Snacks.\n\n3 snacks = he explodes and dies. Keep an eye on those'snack break'."
+                                )
+
+                                characterRowCard(
+                                    image: "boom head",
+                                    title: "Dr. Boom Boom",
+                                    description: "Half genius, half menace.\n\nHis coin-flip experiments have a 50/50 outcome. It works half the time, the other half? BIG BOOM!"
+                                )
+                            }
+                            .frame(maxWidth: .infinity)
+
+                            // Right Filled Card: Bonk
+                            VStack(spacing: 10) {
+                                Spacer(minLength: 0)
+
+                                Image("bonk")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 110)
+
+                                Text("Bonk")
+                                    .font(.system(size: 18, weight: .bold, design: .serif))
+
+                                Text(
+                                    "Bonk is the 'final boss'...but Bonk doesn’t do much.\n\nHe's just blocking the exit but he also doesn’t attack. Reduce his HP to 0 to escape."
+                                )
+                                .font(.system(size: 13))
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                                Spacer(minLength: 0)
+                            }
+                            .padding(16)
+                            .frame(width: 230)
+                            .frame(maxHeight: .infinity)
+                            .background(
+                                AppTheme.paper,
+                                in: RoundedRectangle(cornerRadius: 14)
+                            )
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(AppTheme.outline.opacity(0.55), lineWidth: 1)
+                            }
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    // MARK: - An Encounter
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionTitle("How-to-Play")
+                        Text(
+                            "The game is played in rounds called Encounters. Follow these 4 steps for One Encounter:")
+
+                        HStack(alignment: .top, spacing: 10) {
                             ruleCard(
                                 number: "01",
-                                text: "Each idiot draws 2 possible moves and will always pick the most self-destructive one.",
-                                compact: compact
+                                title: "Inspect",
+                                text: "Each living idiot reveals two possible moves. Only one will happen."
                             )
 
                             ruleCard(
                                 number: "02",
-                                text: "Drag Heal (+1 HP), Reverse, or Do Nothing onto each idiot before starting the encounter.",
-                                compact: compact
+                                title: "Assign",
+                                text: "Drag your available healer cards onto living teammates."
                             )
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
 
+                        HStack(alignment: .top, spacing: 10) {
                             ruleCard(
                                 number: "03",
-                                text: "Use Reverse to redirect self-damage or friendly fire straight onto Bonk!",
-                                compact: compact
+                                title: "Begin",
+                                text: "Start the encounter. Watch each idiot’s chosen move, your response, and the result resolve one by one."
                             )
 
                             ruleCard(
                                 number: "04",
-                                text: "Win by dropping Bonk to 0 HP. Lose if two idiots become ghosts.",
-                                compact: compact
+                                title: "Repeat",
+                                text: "Check everyone’s HP and the knight’s snacks. Keep going until you escape or everyone dies."
                             )
                         }
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                        // MARK: - Close Button
+                    // MARK: - Ghost Rule
 
-                        Button {
-                            dismiss()
-                        } label: {
-                            Text("Got It")
-                                .font(.headline.bold())
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(
-                                    height: compact ? 42 : 50
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionTitle("Ghost Rule")
+
+                        HStack(alignment: .center, spacing: 14) {
+                            Image("ghost")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 60, height: 60)
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(
+                                    "When an idiot dies, they become a ghost. Unfortunately, death doesn’t make them any less annoying. They steal cards from your hand, leaving you fewer ways to save whoever’s left."
                                 )
-                                .background(
-                                    AppTheme.darkBrown,
-                                    in: Capsule()
-                                )
+                                .font(.system(size: 14))
+                                .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .buttonStyle(.plain)
-                        .padding(.top, 4)
+                        .padding(14)
+                        .background(
+                            AppTheme.paper,
+                            in: RoundedRectangle(cornerRadius: 14)
+                        )
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(AppTheme.outline.opacity(0.55), lineWidth: 1)
+                        }
                     }
-                    .foregroundStyle(AppTheme.darkBrown)
-                    .padding(compact ? 14 : 20)
-                    .background(
-                        AppTheme.paper.opacity(0.58),
-                        in: RoundedRectangle(cornerRadius: 22)
-                    )
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 22)
-                            .stroke(
-                                AppTheme.outline.opacity(0.85),
-                                lineWidth: 1.2
-                            )
-                    }
-                    .frame(maxWidth: 520)
-                    .padding(.horizontal, 18)
-                    .padding(
-                        .vertical,
-                        compact ? 12 : 24
-                    )
-                    .frame(
-                        maxWidth: .infinity,
-                        minHeight: geometry.size.height,
-                        alignment: .center
-                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .scrollIndicators(.hidden)
+                .foregroundStyle(AppTheme.darkBrown)
+                .padding(24)
+                .background(
+                    AppTheme.paper.opacity(0.58),
+                    in: RoundedRectangle(cornerRadius: 22)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22)
+                        .stroke(AppTheme.outline.opacity(0.85), lineWidth: 1.2)
+                        .allowsHitTesting(false)
+                }
+                .frame(maxWidth: 780)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 20)
+                .frame(maxWidth: .infinity)
             }
+
+            // MARK: - Close Button
+
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(AppTheme.darkBrown, in: Circle())
+                    .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 16)
+            .padding(.trailing, 20)
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .presentationBackground(AppTheme.backgroundTan)
     }
 
-    private func guideCard(
-        _ image: String,
+    // MARK: - Section Title
+
+    private func sectionTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 20, weight: .bold, design: .serif))
+    }
+
+    // MARK: - Healer Action Card (Vertical)
+
+    private func healerActionCard(
+        image: String,
         title: String,
-        note: String
+        description: String
     ) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 10) {
             Image(image)
                 .resizable()
                 .scaledToFit()
-                .frame(height: 57)
+                .frame(height: 120)
 
             Text(title)
-                .font(
-                    .system(
-                        size: 11,
-                        weight: .bold
-                    )
-                )
-                .lineLimit(2)
+                .font(.system(size: 16, weight: .bold, design: .serif))
 
-            Text(note)
-                .font(.system(size: 10))
+            Text(description)
+                .font(.system(size: 13))
                 .multilineTextAlignment(.center)
-                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity)
-        .padding(6)
+        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(
             AppTheme.paper,
-            in: RoundedRectangle(cornerRadius: 10)
+            in: RoundedRectangle(cornerRadius: 14)
         )
         .overlay {
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(AppTheme.outline.opacity(0.55))
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(AppTheme.outline.opacity(0.55), lineWidth: 1)
+        }
+    }
+
+    // MARK: - Character Row Card
+
+    private func characterRowCard(
+        image: String,
+        title: String,
+        description: String
+    ) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(image)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 52, height: 52)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 15, weight: .bold, design: .serif))
+
+                Text(description)
+                    .font(.system(size: 13))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            AppTheme.paper,
+            in: RoundedRectangle(cornerRadius: 12)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(AppTheme.outline.opacity(0.55), lineWidth: 1)
         }
     }
 
@@ -300,63 +375,41 @@ struct HowToPlaySheetView: View {
 
     private func ruleCard(
         number: String,
-        text: String,
-        compact: Bool
+        title: String,
+        text: String
     ) -> some View {
-
-        HStack(
-            alignment: .top,
-            spacing: 12
-        ) {
+        HStack(alignment: .top, spacing: 12) {
             Text(number)
-                .font(
-                    .system(
-                        size: compact ? 14 : 17,
-                        weight: .bold,
-                        design: .serif
-                    )
-                )
-                .frame(
-                    width: 28,
-                    alignment: .leading
-                )
+                .font(.system(size: 17, weight: .bold, design: .serif))
+                .frame(width: 26, alignment: .leading)
 
             Rectangle()
                 .fill(AppTheme.outline.opacity(0.7))
                 .frame(width: 1)
 
-            Text(text)
-                .font(
-                    .system(
-                        size: compact ? 13 : 15
-                    )
-                )
-                .fixedSize(
-                    horizontal: false,
-                    vertical: true
-                )
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .leading
-                )
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 15, weight: .bold, design: .serif))
+
+                Text(text)
+                    .font(.system(size: 13))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .foregroundStyle(AppTheme.darkBrown)
-        .padding(compact ? 10 : 15)
-        .frame(
-            maxWidth: .infinity,
-            alignment: .leading
-        )
+        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(
             AppTheme.paper,
             in: RoundedRectangle(cornerRadius: 14)
         )
         .overlay {
             RoundedRectangle(cornerRadius: 14)
-                .stroke(
-                    AppTheme.outline.opacity(0.55),
-                    lineWidth: 1
-                )
+                .stroke(AppTheme.outline.opacity(0.55), lineWidth: 1)
         }
     }
 }
 
+#Preview("Landscape", traits: .landscapeLeft) {
+    HowToPlaySheetView()
+}

@@ -8,7 +8,7 @@ import Foundation
 
 enum HealerCard: String, CaseIterable, Identifiable {
     case heal = "Heal (+1 HP)"
-    case reverse = "Reverse (Re-direct Dmg)"
+    case reverse = "Reverse (Flip action)"
     case doNothing = "Do Nothing"
     
     var id: String { rawValue }

@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		A6095E6630B7B9E600BBD89C /* TheftAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6095E6530B7B9E500BBD89C /* TheftAnimationView.swift */; };
 		A6095E6830B7BA2400BBD89C /* BattleOverlaysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6095E6730B7BA2300BBD89C /* BattleOverlaysView.swift */; };
-		A6095E6A30B7BA5000BBD89C /* BattleHowToPlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6095E6930B7BA4F00BBD89C /* BattleHowToPlayView.swift */; };
 		A6095E6C30B7BAB300BBD89C /* GameOverOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6095E6B30B7BAB100BBD89C /* GameOverOverlayView.swift */; };
 		A6095E6E30B7C86B00BBD89C /* OnboardingComicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6095E6D30B7C86900BBD89C /* OnboardingComicView.swift */; };
 		A69B455430B78F760060EC65 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69B455330B78F720060EC65 /* RootView.swift */; };
@@ -66,7 +65,6 @@
 /* Begin PBXFileReference section */
 		A6095E6530B7B9E500BBD89C /* TheftAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TheftAnimationView.swift; sourceTree = "<group>"; };
 		A6095E6730B7BA2300BBD89C /* BattleOverlaysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleOverlaysView.swift; sourceTree = "<group>"; };
-		A6095E6930B7BA4F00BBD89C /* BattleHowToPlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleHowToPlayView.swift; sourceTree = "<group>"; };
 		A6095E6B30B7BAB100BBD89C /* GameOverOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverOverlayView.swift; sourceTree = "<group>"; };
 		A6095E6D30B7C86900BBD89C /* OnboardingComicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingComicView.swift; sourceTree = "<group>"; };
 		A69B455330B78F720060EC65 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -154,7 +152,6 @@
 			isa = PBXGroup;
 			children = (
 				A6095E6B30B7BAB100BBD89C /* GameOverOverlayView.swift */,
-				A6095E6930B7BA4F00BBD89C /* BattleHowToPlayView.swift */,
 				A6095E6730B7BA2300BBD89C /* BattleOverlaysView.swift */,
 				A6095E6530B7B9E500BBD89C /* TheftAnimationView.swift */,
 				A6F6E45A30A5708F00C0CB1D /* GameBoardView.swift */,
@@ -373,7 +370,6 @@
 				AE8A444530AA52700054775D /* AuthManager.swift in Sources */,
 				A6F6E46230A5716500C0CB1D /* EncounterResolutionView.swift in Sources */,
 				A6095E6E30B7C86B00BBD89C /* OnboardingComicView.swift in Sources */,
-				A6095E6A30B7BA5000BBD89C /* BattleHowToPlayView.swift in Sources */,
 				A69B456630B796480060EC65 /* BattleGuideOptionsView.swift in Sources */,
 				A69B455430B78F760060EC65 /* RootView.swift in Sources */,
 				AE8A441230AA3FFA0054775D /* AudioManager.swift in Sources */,
