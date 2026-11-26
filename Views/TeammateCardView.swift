@@ -49,53 +49,53 @@ struct TeammateCardView: View {
                     // Illustrated cards scale to fit the available space
                     // while keeping the bottom description crisp.
 
-                                        VStack(spacing: 4) {
-                                            HStack(spacing: 4) {
-                                                Text("Possible moves")
-                                                    .font(
-                                                        .system(
-                                                            size: 12,
-                                                            weight: .bold,
-                                                            design: .serif
-                                                        )
-                                                    )
+                    VStack(spacing: 4) {
+                        HStack(spacing: 4) {
+                            Text("Possible moves")
+                                .font(
+                                    .system(
+                                        size: 12,
+                                        weight: .bold,
+                                        design: .serif
+                                    )
+                                )
 
-                                                Image(systemName: "magnifyingglass")
-                                                    .font(.system(size: 10, weight: .bold))
-                                            }
-                                            .foregroundStyle(darkBrownText)
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundStyle(darkBrownText)
 
-                                            HStack(
-                                                alignment: .center,
-                                                spacing: 7
-                                            ) {
-                                                IdiotMoveCardView(
-                                                    card: teammate.optionA,
-                                                    textColor: darkBrownText,
-                                                    borderColor: mediumBrown
-                                                )
+                        HStack(
+                            alignment: .center,
+                            spacing: 7
+                        ) {
+                            IdiotMoveCardView(
+                                card: teammate.optionA,
+                                textColor: darkBrownText,
+                                borderColor: mediumBrown
+                            )
 
-                                                IdiotMoveCardView(
-                                                    card: teammate.optionB,
-                                                    textColor: darkBrownText,
-                                                    borderColor: mediumBrown
-                                                )
-                                            }
-                                            .frame(
-                                                maxWidth: .infinity,
-                                                maxHeight: .infinity
-                                            )
-                                            .contentShape(Rectangle())
-                                            .onTapGesture {
-                                                withAnimation(.easeOut(duration: 0.2)) {
-                                                    game.inspectedTeammate = teammate
-                                                }
-                                            }
-                                        }
-                                        .frame(
-                                            maxWidth: .infinity,
-                                            maxHeight: .infinity
-                                        )
+                            IdiotMoveCardView(
+                                card: teammate.optionB,
+                                textColor: darkBrownText,
+                                borderColor: mediumBrown
+                            )
+                        }
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                game.inspectedTeammate = teammate
+                            }
+                        }
+                    }
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity
+                    )
 
                     // MARK: - Drop Target
                     // Keep the visible target large
@@ -164,7 +164,10 @@ struct TeammateCardView: View {
     private func characterHeader(
         narrow: Bool
     ) -> some View {
-        HStack(
+        let snacks = game.snackBreakCount(for: teammate)
+        let maxSnacks = game.maxSnackBreaks
+
+        return HStack(
             alignment: .center,
             spacing: 8
         ) {
@@ -178,7 +181,7 @@ struct TeammateCardView: View {
 
             VStack(
                 alignment: .leading,
-                spacing: 5
+                spacing: 4
             ) {
                 Text(teammate.name)
                     .font(
@@ -196,27 +199,37 @@ struct TeammateCardView: View {
                         vertical: true
                     )
 
-                HStack(spacing: 2) {
-                    ForEach(
-                        0..<teammate.maxHp,
-                        id: \.self
-                    ) { index in
-                        Image(
-                            systemName: "heart.fill"
-                        )
-                        .font(
-                            .system(size: narrow ? 10 : 12)
-                        )
-                        .foregroundStyle(
-                            index < teammate.hp
-                                ? Color.red
-                                : Color.gray
+                HStack(spacing: 6) {
+                    HStack(spacing: 2) {
+                        ForEach(
+                            0..<teammate.maxHp,
+                            id: \.self
+                        ) { index in
+                            Image(
+                                systemName: "heart.fill"
+                            )
+                            .font(
+                                .system(size: narrow ? 10 : 12)
+                            )
+                            .foregroundStyle(
+                                index < teammate.hp
+                                    ? Color.red
+                                    : Color.gray
+                            )
+                        }
+                    }
+                    .accessibilityLabel(
+                        "\(teammate.hp) of \(teammate.maxHp) HP"
+                    )
+
+                    if teammate.character == .knight {
+                        SnackBreakCounterBadge(
+                            count: snacks,
+                            maxCount: maxSnacks,
+                            compact: narrow
                         )
                     }
                 }
-                .accessibilityLabel(
-                    "\(teammate.hp) of \(teammate.maxHp) HP"
-                )
             }
 
             Spacer(minLength: 0)
@@ -352,6 +365,55 @@ struct TeammateCardView: View {
                 ? "Drop a healer card here"
                 : "Assigned healer card"
         )
+    }
+}
+
+// MARK: - Snack Break Counter Badge
+
+struct SnackBreakCounterBadge: View {
+    let count: Int
+    let maxCount: Int
+    var compact: Bool = false
+
+    private var isDanger: Bool {
+        count >= maxCount - 1
+    }
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Text("🍪")
+                .font(.system(size: compact ? 10 : 11))
+
+            HStack(spacing: 2) {
+                ForEach(0..<maxCount, id: \.self) { index in
+                    Circle()
+                        .fill(
+                            index < count
+                                ? (isDanger ? Color.red : Color(red: 0.62, green: 0.34, blue: 0.14))
+                                : Color.brown.opacity(0.25)
+                        )
+                        .frame(width: compact ? 5 : 6, height: compact ? 5 : 6)
+                }
+            }
+
+            Text("\(count)/\(maxCount)")
+                .font(.system(size: compact ? 9 : 10, weight: .bold, design: .rounded))
+                .foregroundStyle(isDanger ? Color.red : Color(red: 0.35, green: 0.23, blue: 0.18))
+        }
+        .padding(.horizontal, compact ? 5 : 6)
+        .padding(.vertical, 2)
+        .background(
+            isDanger ? Color.red.opacity(0.12) : Color.white.opacity(0.72),
+            in: Capsule()
+        )
+        .overlay {
+            Capsule()
+                .stroke(
+                    isDanger ? Color.red.opacity(0.75) : Color.brown.opacity(0.45),
+                    lineWidth: 1
+                )
+        }
+        .accessibilityLabel("Snack breaks: \(count) of \(maxCount)")
     }
 }
 

@@ -1,5 +1,3 @@
-
-//
 //  EncounterResolutionView.swift
 //  IDSN533 MyHealerSuck
 //
@@ -109,25 +107,25 @@ struct EncounterResolutionView: View {
                 .frame(maxWidth: .infinity)
                 
                 // CENTER: 3D Flipping Reveal Cards
-                                HStack(spacing: 12) {
-                                    FlippableRevealCard(
-                                        header: "Their move",
-                                        title: activeTeammate.chosenMove?.title ?? "???",
-                                        subtitle: activeTeammate.chosenMove?.description ?? "",
-                                        accentColor: Color.orange.opacity(0.25),
-                                        isFlipped: game.cardsFlipped,
-                                        idiotCard: activeTeammate.chosenMove
-                                    )
-                                    
-                                    FlippableRevealCard(
-                                        header: "Your response",
-                                        title: activeTeammate.assignedCard?.rawValue ?? "Do Nothing",
-                                        subtitle: "",
-                                        accentColor: Color.purple.opacity(0.2),
-                                        isFlipped: game.cardsFlipped,
-                                        imageName: (activeTeammate.assignedCard ?? .doNothing).imageName
-                                    )
-                                }
+                HStack(spacing: 12) {
+                    FlippableRevealCard(
+                        header: "Their move",
+                        title: activeTeammate.chosenMove?.title ?? "???",
+                        subtitle: activeTeammate.chosenMove?.description ?? "",
+                        accentColor: Color.orange.opacity(0.25),
+                        isFlipped: game.cardsFlipped,
+                        idiotCard: activeTeammate.chosenMove
+                    )
+                    
+                    FlippableRevealCard(
+                        header: "Your response",
+                        title: activeTeammate.assignedCard?.rawValue ?? "Do Nothing",
+                        subtitle: "",
+                        accentColor: Color.purple.opacity(0.2),
+                        isFlipped: game.cardsFlipped,
+                        imageName: (activeTeammate.assignedCard ?? .doNothing).imageName
+                    )
+                }
                 
                 // RIGHT: BONK
                 ZStack {
@@ -193,6 +191,7 @@ struct EncounterResolutionView: View {
 
 struct CompactIdiotStatusPill: View {
     @ObservedObject var teammate: Teammate
+    @EnvironmentObject var game: GameManager
     let isActive: Bool
     
     var body: some View {
@@ -207,11 +206,21 @@ struct CompactIdiotStatusPill: View {
                     .font(.system(size: 11, weight: .bold, design: .serif))
                     .lineLimit(1)
                 
-                HStack(spacing: 2) {
-                    ForEach(0..<teammate.maxHp, id: \.self) { i in
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 9))
-                            .foregroundColor(i < teammate.hp ? .red : .gray.opacity(0.4))
+                HStack(spacing: 4) {
+                    HStack(spacing: 2) {
+                        ForEach(0..<teammate.maxHp, id: \.self) { i in
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(i < teammate.hp ? .red : .gray.opacity(0.4))
+                        }
+                    }
+
+                    if teammate.character == .knight {
+                        SnackBreakCounterBadge(
+                            count: game.snackBreakCount(for: teammate),
+                            maxCount: game.maxSnackBreaks,
+                            compact: true
+                        )
                     }
                 }
             }
@@ -242,12 +251,12 @@ struct FlippableRevealCard: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(header)
-                            .font(.system(size: 12, weight: .bold, design: .serif))
-                            .foregroundColor(darkBrown)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 3)
-                            .background(Color(red: 0.98, green: 0.88, blue: 0.74).opacity(0.92), in: Capsule())
-                            .overlay(Capsule().stroke(darkBrown, lineWidth: 1))
+                .font(.system(size: 12, weight: .bold, design: .serif))
+                .foregroundColor(darkBrown)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+                .background(Color(red: 0.98, green: 0.88, blue: 0.74).opacity(0.92), in: Capsule())
+                .overlay(Capsule().stroke(darkBrown, lineWidth: 1))
             
             ZStack {
                 if isFlipped {
@@ -296,4 +305,3 @@ struct FlippableRevealCard: View {
                 .ignoresSafeArea()
         }
 }
-

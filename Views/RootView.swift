@@ -12,6 +12,7 @@ struct RootView: View {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("entryMode") private var entryMode = ""
 
+    @State private var justFinishedOnboarding = false
     @State private var isAuthenticated = false
     @State private var isGuest = false
     @State private var authListenerHandle: AuthStateDidChangeListenerHandle?
@@ -21,7 +22,27 @@ struct RootView: View {
             if !hasSeenOnboarding {
                 OnboardingComicView(onFinish: {
                     hasSeenOnboarding = true
+                    justFinishedOnboarding = true
+                    isGuest = false
+                    entryMode = ""
                 })
+            } else if justFinishedOnboarding {
+                NavigationStack {
+                    AuthView(
+                        mode: .logIn,
+                        onAuthenticated: {
+                            justFinishedOnboarding = false
+                            if Auth.auth().currentUser?.isEmailVerified == true {
+                                isAuthenticated = true
+                                isGuest = false
+                            }
+                        },
+                        onPlayAsGuest: {
+                            justFinishedOnboarding = false
+                            isGuest = true
+                        }
+                    )
+                }
             } else if isAuthenticated || isGuest {
                 NavigationStack {
                     HomeView(
@@ -51,6 +72,7 @@ struct RootView: View {
                 }
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: justFinishedOnboarding)
         .animation(.easeInOut(duration: 0.25), value: isAuthenticated || isGuest)
         .onAppear {
             guard authListenerHandle == nil else { return }

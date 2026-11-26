@@ -33,6 +33,13 @@ class GameManager: ObservableObject {
         .doNothing
     ]
 
+    @Published private(set) var snackBreaksTaken: [UUID: Int] = [:]
+    let maxSnackBreaks: Int = 3
+
+    func snackBreakCount(for teammate: Teammate) -> Int {
+        snackBreaksTaken[teammate.id, default: 0]
+    }
+
     @Published private(set) var pendingThefts: [GhostTheft] = []
     private(set) var stolenCards: [UUID: HealerCard] = [:]
     func finishGhostTheft(_ id: UUID) {
@@ -501,8 +508,35 @@ class GameManager: ObservableObject {
                     "\(actor.name) drinks Healing Potion (+1 HP)!"
             }
 
-        case .snackBreak,
-             .removeArmor,
+        case .snackBreak:
+            if isReversed {
+                resolutionBannerText =
+                    "Reverse cancels \(actor.name)'s Snack Break!"
+            } else {
+                let updatedCount = snackBreakCount(for: actor) + 1
+                snackBreaksTaken[actor.id] = updatedCount
+
+                actor.feedbackIsHeal = false
+                actor.floatingFeedback = "🍪 \(updatedCount)/\(maxSnackBreaks)"
+
+                if updatedCount >= maxSnackBreaks {
+                    let remainingHP = actor.hp
+                    if remainingHP > 0 {
+                        damageTeammate(actor, amount: remainingHP)
+                    } else if !actor.isGhost {
+                        actor.stateMachine?.enter(TeammateGhostState.self)
+                        AudioManager.shared.playEffect(named: "ghost_appear")
+                    }
+                    resolutionBannerText =
+                        "\(actor.name) took \(maxSnackBreaks)/\(maxSnackBreaks) snack breaks — instant KO!"
+                } else {
+                    AudioManager.shared.playEffect(named: "damage")
+                    resolutionBannerText =
+                        "\(actor.name) takes a snack break (\(updatedCount)/\(maxSnackBreaks))!"
+                }
+            }
+
+        case .removeArmor,
              .holyShield,
              .tank,
              .accidentalSavior:
@@ -640,6 +674,7 @@ class GameManager: ObservableObject {
 
     func resetGame() {
         withAnimation {
+            snackBreaksTaken.removeAll()
             pendingThefts.removeAll()
             stolenCards.removeAll()
             bonkHP = 5
@@ -667,5 +702,3 @@ class GameManager: ObservableObject {
         inspectedTeammate = nil
     }
 }
-
-
