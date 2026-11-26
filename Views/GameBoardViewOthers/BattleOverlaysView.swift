@@ -187,12 +187,13 @@ struct PauseOverlayView: View {
                             .accessibilityLabel("Close Pause Menu")
                         }
 
+                       
 
                         Text("Game Paused")
                             .font(.system(size: compact ? 23 : 28, weight: .bold, design: .serif))
-
+                        
                         Spacer()
-
+                    
                         menuButton("Resume Game", icon: "play.fill", style: .primary, action: onResume)
                         menuButton("Player Profile", icon: "person.crop.circle.fill", action: onOpenProfile)
                         menuButton("Settings", icon: "gearshape.fill", action: onOpenSettings)

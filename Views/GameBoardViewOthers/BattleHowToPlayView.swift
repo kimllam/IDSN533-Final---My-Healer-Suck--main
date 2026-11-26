@@ -20,7 +20,7 @@ struct BattleHowToPlayView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: compact ? 12 : 20) {
                         VStack(spacing: 8) {
-                            Text("How to Play")
+                            Text("My Healer Sucks Rulebook")
                                 .font(.system(size: compact ? 26 : 32, weight: .black, design: .serif))
 
                             HStack(spacing: 12) {
@@ -39,19 +39,19 @@ struct BattleHowToPlayView: View {
                         VStack(spacing: compact ? 8 : 12) {
                             ruleCard(
                                 "01",
-                                "Each idiot draws 2 possible moves and will always pick the most self-destructive one.",
+                                "Each idiot(bots) will draw 2 possible moves.",
                                 compact: compact
                             )
 
                             ruleCard(
                                 "02",
-                                "Drag Heal (+1 HP), Reverse, or Do Nothing onto each idiot before starting the encounter.",
+                                "As the Healer, YOU can drag Heal (+1 HP), Reverse, or Do Nothing onto each idiot before starting the encounter.",
                                 compact: compact
                             )
 
                             ruleCard(
                                 "03",
-                                "Use Reverse to redirect self-damage or friendly fire straight onto Bonk!",
+                                "Watch the chaos playout!",
                                 compact: compact
                             )
 
@@ -62,17 +62,6 @@ struct BattleHowToPlayView: View {
                             )
                         }
 
-                        Button {
-                            dismiss()
-                        } label: {
-                            Text("Got It")
-                                .font(.headline.bold())
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: compact ? 40 : 50)
-                                .background(AppTheme.darkBrown, in: Capsule())
-                        }
-                        .buttonStyle(.plain)
                     }
                     .foregroundStyle(AppTheme.darkBrown)
                     .padding(compact ? 14 : 20)

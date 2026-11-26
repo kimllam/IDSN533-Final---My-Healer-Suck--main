@@ -30,7 +30,6 @@
 		AE8A440E30AA30230054775D /* PlayerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A440D30AA30190054775D /* PlayerProfileView.swift */; };
 		AE8A441030AA3E8C0054775D /* GameRecordStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A440F30AA3E880054775D /* GameRecordStore.swift */; };
 		AE8A441230AA3FFA0054775D /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A441130AA3FF60054775D /* AudioManager.swift */; };
-		AE8A441430AA4AB50054775D /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A441330AA4AB00054775D /* WelcomeView.swift */; };
 		AE8A441630AA4B750054775D /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A441530AA4B680054775D /* AuthView.swift */; };
 		AE8A444330AA51410054775D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AE8A444230AA51410054775D /* FirebaseAuth */; };
 		AE8A444530AA52700054775D /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8A444430AA526D0054775D /* AuthManager.swift */; };
@@ -89,7 +88,6 @@
 		AE8A440D30AA30190054775D /* PlayerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerProfileView.swift; sourceTree = "<group>"; };
 		AE8A440F30AA3E880054775D /* GameRecordStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRecordStore.swift; sourceTree = "<group>"; };
 		AE8A441130AA3FF60054775D /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
-		AE8A441330AA4AB00054775D /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		AE8A441530AA4B680054775D /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		AE8A444430AA526D0054775D /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		AEAB4DD230B10DBD0054ECF8 /* CloudPlayerProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudPlayerProfileStore.swift; sourceTree = "<group>"; };
@@ -219,7 +217,6 @@
 				A69B455830B794BD0060EC65 /* HomeViewOthers */,
 				A69B455330B78F720060EC65 /* RootView.swift */,
 				AE8A441530AA4B680054775D /* AuthView.swift */,
-				AE8A441330AA4AB00054775D /* WelcomeView.swift */,
 				AE8A440D30AA30190054775D /* PlayerProfileView.swift */,
 				AE8A440B30AA2E7E0054775D /* SettingsView.swift */,
 				A6F6E45830A5706A00C0CB1D /* TeammateCardView.swift */,
@@ -379,7 +376,6 @@
 				A6095E6A30B7BA5000BBD89C /* BattleHowToPlayView.swift in Sources */,
 				A69B456630B796480060EC65 /* BattleGuideOptionsView.swift in Sources */,
 				A69B455430B78F760060EC65 /* RootView.swift in Sources */,
-				AE8A441430AA4AB50054775D /* WelcomeView.swift in Sources */,
 				AE8A441230AA3FFA0054775D /* AudioManager.swift in Sources */,
 				AEAB4DD330B10DC20054ECF8 /* CloudPlayerProfileStore.swift in Sources */,
 				A6F6E45D30A5714F00C0CB1D /* TeammateStates.swift in Sources */,

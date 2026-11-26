@@ -15,6 +15,7 @@ struct GameBoardView: View {
     @EnvironmentObject var game: GameManager
     @EnvironmentObject private var auth: AuthManager
     @EnvironmentObject private var appRoute: AppRouteState
+    @Environment(\.dismiss) private var dismiss
     @AppStorage("entryMode") private var entryMode = ""
 
     private var isRegisteredPlayer: Bool {
@@ -404,7 +405,7 @@ struct GameBoardView: View {
         game.inspectedTeammate = nil
         GameRecordStore.shared.endBattleSession()
         game.resetGame()
-        appRoute.returnToLaunchScreen()
+        dismiss()
     }
 
     private func restartBattle() {

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// MARK: - Centralized Asset Names
+// screen panel names
 
 enum OnboardingAsset {
     static let panel1Exit = "intro_01_exit"
@@ -19,7 +19,7 @@ enum OnboardingAsset {
     static let panel7YouAreHealer = "intro_07_you_are_healer"
 }
 
-// MARK: - Panel Model & Screen Mapping
+// screen mapping
 
 private struct ComicPanelSpec: Identifiable {
     let id: Int // Global reveal index 0...6
@@ -28,25 +28,6 @@ private struct ComicPanelSpec: Identifiable {
     let fallbackColor: Color
     let skewDegrees: Double
     let alignment: Alignment
-    let contentMode: ContentMode
-
-    init(
-        id: Int,
-        imageName: String,
-        fallbackLabel: String,
-        fallbackColor: Color,
-        skewDegrees: Double,
-        alignment: Alignment = .center,
-        contentMode: ContentMode = .fit
-    ) {
-        self.id = id
-        self.imageName = imageName
-        self.fallbackLabel = fallbackLabel
-        self.fallbackColor = fallbackColor
-        self.skewDegrees = skewDegrees
-        self.alignment = alignment
-        self.contentMode = contentMode
-    }
 }
 
 private enum ComicScreen: Int, CaseIterable {
@@ -66,7 +47,7 @@ private enum ComicScreen: Int, CaseIterable {
     }
 }
 
-// MARK: - Main Onboarding View
+// main onboarding view
 
 struct OnboardingComicView: View {
     let onFinish: () -> Void
@@ -88,7 +69,8 @@ struct OnboardingComicView: View {
         imageName: OnboardingAsset.panel1Exit,
         fallbackLabel: "1 · Exit",
         fallbackColor: Color(red: 0.94, green: 0.85, blue: 0.72),
-        skewDegrees: -1.1
+        skewDegrees: -1.1,
+        alignment: .center
     )
 
     private let panel1 = ComicPanelSpec(
@@ -96,7 +78,8 @@ struct OnboardingComicView: View {
         imageName: OnboardingAsset.panel2Bonk,
         fallbackLabel: "2 · Bonk",
         fallbackColor: Color(red: 0.91, green: 0.78, blue: 0.63),
-        skewDegrees: 1.0
+        skewDegrees: 1.0,
+        alignment: .center
     )
 
     private let panel2 = ComicPanelSpec(
@@ -104,7 +87,8 @@ struct OnboardingComicView: View {
         imageName: OnboardingAsset.panel3HealerChaos,
         fallbackLabel: "3 · Healer Chaos",
         fallbackColor: Color(red: 0.93, green: 0.82, blue: 0.68),
-        skewDegrees: -0.9
+        skewDegrees: -0.9,
+        alignment: .center
     )
 
     private let panel3 = ComicPanelSpec(
@@ -112,7 +96,8 @@ struct OnboardingComicView: View {
         imageName: OnboardingAsset.panel4Vampire,
         fallbackLabel: "4 · Vampire",
         fallbackColor: Color(red: 0.89, green: 0.75, blue: 0.64),
-        skewDegrees: 0.8
+        skewDegrees: 0.8,
+        alignment: .top
     )
 
     private let panel4 = ComicPanelSpec(
@@ -120,7 +105,8 @@ struct OnboardingComicView: View {
         imageName: OnboardingAsset.panel5Knight,
         fallbackLabel: "5 · Knight",
         fallbackColor: Color(red: 0.95, green: 0.86, blue: 0.71),
-        skewDegrees: -0.8
+        skewDegrees: -0.8,
+        alignment: .center
     )
 
     private let panel5 = ComicPanelSpec(
@@ -128,7 +114,8 @@ struct OnboardingComicView: View {
         imageName: OnboardingAsset.panel6Boom,
         fallbackLabel: "6 · Boom",
         fallbackColor: Color(red: 0.92, green: 0.76, blue: 0.60),
-        skewDegrees: 0.9
+        skewDegrees: 0.9,
+        alignment: .center
     )
 
     private let panel6 = ComicPanelSpec(
@@ -136,7 +123,8 @@ struct OnboardingComicView: View {
         imageName: OnboardingAsset.panel7YouAreHealer,
         fallbackLabel: "7 · You Are Healer",
         fallbackColor: Color(red: 0.94, green: 0.84, blue: 0.69),
-        skewDegrees: -0.6
+        skewDegrees: -0.6,
+        alignment: .center
     )
 
     private let totalPanels = 7
@@ -182,7 +170,7 @@ struct OnboardingComicView: View {
         .environment(\.colorScheme, .light)
     }
 
-    // MARK: - Screen Layouts
+    // each screen layout
 
     @ViewBuilder
     private func comicStage(totalWidth: CGFloat, gutter: CGFloat) -> some View {
@@ -275,7 +263,7 @@ struct OnboardingComicView: View {
         }
     }
 
-    // MARK: - Step Actions (Manual Only)
+    // manual "next" action
 
     private func stepNext() {
         if revealIndex < totalPanels - 1 {
@@ -294,7 +282,7 @@ struct OnboardingComicView: View {
     }
 }
 
-// MARK: - Reusable Comic Panel
+// comic panel
 
 private struct ComicPanel: View {
     let spec: ComicPanelSpec
@@ -346,21 +334,11 @@ private struct ComicPanel: View {
     @ViewBuilder
     private func panelArtwork(in size: CGSize) -> some View {
         if let uiImage = UIImage(named: spec.imageName) {
-            Group {
-                if spec.contentMode == .fit {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: size.width, maxHeight: size.height, alignment: spec.alignment)
-                } else {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: size.width, height: size.height, alignment: spec.alignment)
-                        .clipped()
-                }
-            }
-            .frame(width: size.width, height: size.height, alignment: spec.alignment)
+            Image(uiImage: uiImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size.width, height: size.height, alignment: spec.alignment)
+                .clipped()
         } else {
             ZStack {
                 spec.fallbackColor.opacity(0.65)
@@ -396,7 +374,7 @@ private struct ComicPanel: View {
     }
 }
 
-// MARK: - Slightly Angled Manga Frame Shape
+// manga frames
 
 private struct AngledComicPanelShape: Shape {
     let skewDegrees: Double
@@ -421,7 +399,7 @@ private struct AngledComicPanelShape: Shape {
     }
 }
 
-// MARK: - Top Header Component
+// top header
 
 private struct ComicTopBar: View {
     let inkColor: Color
@@ -438,7 +416,7 @@ private struct ComicTopBar: View {
     }
 }
 
-// MARK: - Bottom Navigation Component
+// bottom nav
 
 private struct ComicBottomBar: View {
     let canGoBack: Bool
@@ -505,12 +483,10 @@ private struct ComicBottomBar: View {
     }
 }
 
-// MARK: - Preview
 
 #Preview("Landscape Onboarding") {
     OnboardingComicView(
         onFinish: {},
         onSkip: {}
     )
-    .previewInterfaceOrientation(.landscapeLeft)
 }

@@ -261,6 +261,8 @@ struct PlayerProfileView: View {
     private var dismiss
 
     @State private var avatarPhoto: UIImage?
+    @State private var showSignUpSheet = false
+    @State private var signOutErrorMessage: String?
     @StateObject private var records = GameRecordStore.shared
     @StateObject private var cloudProfile = CloudPlayerProfileStore()
 
@@ -386,14 +388,7 @@ struct PlayerProfileView: View {
 
                             if isGuest {
                                 Button {
-                                    // Guests can open the existing account selection screen.
-                                    // No Firebase sign-out is performed.
-                                    GameRecordStore.shared.endBattleSession()
-                                    game.inspectedTeammate = nil
-                                    game.resetGame()
-                                    entryMode = ""
-                                    GameRecordStore.shared.refreshForCurrentAccount()
-                                    appRoute.returnToAccountSelection()
+                                    showSignUpSheet = true
                                 } label: {
                                     PaperRow(
                                         title: "Create Account / Log In",
@@ -425,6 +420,45 @@ struct PlayerProfileView: View {
                                     )
                                 }
                                 .buttonStyle(.plain)
+
+                                Button(action: handleLogOut) {
+                                    HStack(spacing: 14) {
+                                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                                            .font(
+                                                .system(
+                                                    size: 19,
+                                                    weight: .semibold
+                                                )
+                                            )
+                                            .frame(width: 26)
+
+                                        Text("Log Out")
+                                            .font(
+                                                .system(
+                                                    size: 16,
+                                                    weight: .semibold
+                                                )
+                                            )
+
+                                        Spacer()
+                                    }
+                                    .foregroundStyle(ProfileStyle.brown)
+                                    .padding(.horizontal, 17)
+                                    .frame(height: 56)
+                                    .background(
+                                        ProfileStyle.paper,
+                                        in: RoundedRectangle(cornerRadius: 14)
+                                    )
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(
+                                                ProfileStyle.line,
+                                                lineWidth: 1.3
+                                            )
+                                    }
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
                             }
 
                             achievementsPreview
@@ -441,6 +475,37 @@ struct PlayerProfileView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showSignUpSheet) {
+                AuthView(
+                    mode: .signUp,
+                    onAuthenticated: {
+                        showSignUpSheet = false
+                        dismiss()
+                    },
+                    onPlayAsGuest: {
+                        GameRecordStore.shared.endBattleSession()
+                        game.inspectedTeammate = nil
+                        game.resetGame()
+                        entryMode = "guest"
+                        GameRecordStore.shared.refreshForCurrentAccount()
+                        showSignUpSheet = false
+                    }
+                )
+                .environmentObject(auth)
+                .environmentObject(game)
+                .environmentObject(appRoute)
+            }
+            .alert(
+                "Unable to Log Out",
+                isPresented: Binding(
+                    get: { signOutErrorMessage != nil },
+                    set: { if !$0 { signOutErrorMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(signOutErrorMessage ?? "Please try again.")
+            }
             .onAppear {
                 loadAvatarSettings()
                 loadNickname()
@@ -486,6 +551,21 @@ struct PlayerProfileView: View {
             // Keep syncing while navigating to Edit Profile.
             // Disconnect only when this profile flow is dismissed.
             cloudProfile.disconnect()
+        }
+    }
+
+    private func handleLogOut() {
+        do {
+            cloudProfile.disconnect()
+            GameRecordStore.shared.endBattleSession()
+            game.inspectedTeammate = nil
+            game.resetGame()
+            try Auth.auth().signOut()
+            entryMode = ""
+            GameRecordStore.shared.refreshForCurrentAccount()
+            dismiss()
+        } catch {
+            signOutErrorMessage = error.localizedDescription
         }
     }
 

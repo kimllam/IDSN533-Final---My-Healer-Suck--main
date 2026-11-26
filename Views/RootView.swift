@@ -10,6 +10,7 @@ import FirebaseAuth
 
 struct RootView: View {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("entryMode") private var entryMode = ""
 
     @State private var isAuthenticated = false
     @State private var isGuest = false
@@ -27,15 +28,27 @@ struct RootView: View {
                         isGuest: isGuest,
                         onExitGuest: {
                             isGuest = false
+                            if entryMode == "guest" {
+                                entryMode = ""
+                            }
                         }
                     )
                 }
             } else {
-                AuthView(
-                    onContinueAsGuest: {
-                        isGuest = true
-                    }
-                )
+                NavigationStack {
+                    AuthView(
+                        mode: .logIn,
+                        onAuthenticated: {
+                            if Auth.auth().currentUser?.isEmailVerified == true {
+                                isAuthenticated = true
+                                isGuest = false
+                            }
+                        },
+                        onPlayAsGuest: {
+                            isGuest = true
+                        }
+                    )
+                }
             }
         }
         .animation(.easeInOut(duration: 0.25), value: isAuthenticated || isGuest)
