@@ -263,6 +263,7 @@ struct PlayerProfileView: View {
     @State private var avatarPhoto: UIImage?
     @State private var showSignUpSheet = false
     @State private var signOutErrorMessage: String?
+    @State private var showDeleteAccountSheet = false
     @StateObject private var records = GameRecordStore.shared
     @StateObject private var cloudProfile = CloudPlayerProfileStore()
 
@@ -459,6 +460,32 @@ struct PlayerProfileView: View {
                                     .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
+
+                                Button {
+                                    showDeleteAccountSheet = true
+                                } label: {
+                                    HStack(spacing: 14) {
+                                        Image(systemName: "trash")
+                                            .font(.system(size: 19, weight: .semibold))
+                                            .frame(width: 26)
+                                        Text("Delete Account")
+                                            .font(.system(size: 16, weight: .semibold))
+                                        Spacer()
+                                    }
+                                    .foregroundStyle(ProfileStyle.brown)
+                                    .padding(.horizontal, 17)
+                                    .frame(height: 56)
+                                    .background(
+                                        ProfileStyle.paper,
+                                        in: RoundedRectangle(cornerRadius: 14)
+                                    )
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(ProfileStyle.line, lineWidth: 1.3)
+                                    }
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
                             }
 
                             achievementsPreview
@@ -494,6 +521,11 @@ struct PlayerProfileView: View {
                 .environmentObject(auth)
                 .environmentObject(game)
                 .environmentObject(appRoute)
+            }
+            .sheet(isPresented: $showDeleteAccountSheet) {
+                DeleteAccountConfirmationSheet { password in
+                    try await performAccountDeletion(password: password)
+                }
             }
             .alert(
                 "Unable to Log Out",
@@ -567,6 +599,46 @@ struct PlayerProfileView: View {
         } catch {
             signOutErrorMessage = error.localizedDescription
         }
+    }
+
+    // MARK: - Permanently Delete Account
+
+    private func performAccountDeletion(password: String) async throws {
+        guard !isGuest, let uid = auth.userID else {
+            throw AuthManager.AuthError.noCurrentUser
+        }
+
+        // Disconnect listeners so deleted cloud data is not restored by sync.
+        cloudProfile.disconnect()
+        records.suspendSyncForAccountDeletion()
+
+        do {
+            try await auth.deleteAccount(password: password)
+        } catch {
+            // Keep the account accessible if deletion did not complete.
+            records.refreshForCurrentAccount()
+            connectProfileCloud()
+            throw error
+        }
+
+        // Clean the deleted account's local data only after cloud deletion.
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: "playerNickname.account.\(uid)")
+        defaults.removeObject(forKey: "playerAvatarChoice.\(uid)")
+        defaults.removeObject(forKey: "hasSeenGameStory.v1.\(uid)")
+        defaults.removeObject(forKey: "hasCompletedBattleTutorial.v2.\(uid)")
+
+        if let photoURL = AvatarFile.url(for: uid) {
+            try? FileManager.default.removeItem(at: photoURL)
+        }
+
+        records.removeDeletedAccountCache(uid: uid)
+        game.inspectedTeammate = nil
+        game.resetGame()
+        entryMode = ""
+        showDeleteAccountSheet = false
+        dismiss()
+        appRoute.returnToLaunchScreen()
     }
 
     // MARK: - Achievements Preview
@@ -1330,3 +1402,79 @@ private struct BattleAchievementsScreen: View {
         .environmentObject(AuthManager())
         .environmentObject(AppRouteState())
 }
+
+// MARK: - Account Deletion Confirmation
+
+private struct DeleteAccountConfirmationSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let onDelete: (String) async throws -> Void
+
+    @State private var password = ""
+    @State private var isDeleting = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Label("Permanently delete your account", systemImage: "exclamationmark.triangle")
+                        .font(.system(size: 21, weight: .bold, design: .serif))
+
+                    Text("Your login, profile, battle history, and achievements will be deleted. This cannot be undone.")
+                        .font(.system(size: 15, design: .serif))
+
+                    SecureField("Confirm your password", text: $password)
+                        .textContentType(.password)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .padding(14)
+                        .background(Color.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 12))
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+
+                    Button(role: .destructive) {
+                        guard !isDeleting else { return }
+                        isDeleting = true
+                        errorMessage = nil
+                        Task { @MainActor in
+                            do {
+                                try await onDelete(password)
+                            } catch {
+                                errorMessage = error.localizedDescription
+                            }
+                            isDeleting = false
+                        }
+                    } label: {
+                        HStack {
+                            if isDeleting { ProgressView().tint(.white) }
+                            Text(isDeleting ? "Deleting Account..." : "Permanently Delete Account")
+                        }
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(15)
+                        .background(Color(red: 0.55, green: 0.20, blue: 0.16), in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .disabled(password.isEmpty || isDeleting)
+
+                    Button("Cancel") { dismiss() }
+                        .frame(maxWidth: .infinity)
+                        .disabled(isDeleting)
+                }
+                .foregroundStyle(ProfileStyle.brown)
+                .padding(24)
+                .frame(maxWidth: 500)
+                .frame(maxWidth: .infinity)
+            }
+            .background(ProfileStyle.background.ignoresSafeArea())
+            .navigationTitle("Delete Account")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .interactiveDismissDisabled(isDeleting)
+    }
+}
+

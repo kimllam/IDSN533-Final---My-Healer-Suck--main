@@ -10,6 +10,7 @@
 import Foundation
 import Combine
 import FirebaseAuth
+import FirebaseFirestore
 
 // MARK: - Firebase Authentication Manager
 // Added by Jingyi: Manage user authentication
@@ -165,17 +166,76 @@ final class AuthManager: ObservableObject {
         )
     }
 
+    // MARK: - Delete Account
+
+    func deleteAccount(password: String) async throws {
+        guard let user = Auth.auth().currentUser,
+              let currentEmail = user.email,
+              !currentEmail.isEmpty else {
+            throw AuthError.noCurrentUser
+        }
+
+        guard !password.isEmpty else {
+            throw AuthError.passwordRequired
+        }
+
+        let uid = user.uid
+        let credential = EmailAuthProvider.credential(
+            withEmail: currentEmail,
+            password: password
+        )
+
+        // Confirm the account owner before removing any cloud data.
+        try await user.reauthenticate(with: credential)
+
+        let userDocument = Firestore.firestore()
+            .collection("users")
+            .document(uid)
+        let battlesCollection = userDocument.collection("battles")
+
+        // Firestore does not recursively delete subcollections.
+        // Use small batches and fetch from the server to verify completion.
+        while true {
+            let snapshot = try await battlesCollection
+                .limit(to: 100)
+                .getDocuments(source: .server)
+
+            if snapshot.documents.isEmpty { break }
+
+            let batch = Firestore.firestore().batch()
+            for document in snapshot.documents {
+                batch.deleteDocument(document.reference)
+            }
+            try await batch.commit()
+        }
+
+        try await userDocument.delete()
+
+        // Only delete Authentication after the known Firestore data is gone.
+        // A failed operation keeps the account available for a retry.
+        try await user.delete()
+
+        isLoggedIn = false
+        isEmailVerified = false
+        userID = nil
+        email = nil
+    }
+
     // MARK: - Authentication Errors
 
     enum AuthError: LocalizedError {
         case noCurrentUser
+        case passwordRequired
 
         var errorDescription: String? {
             switch self {
             case .noCurrentUser:
                 return "No signed-in account was found."
+            case .passwordRequired:
+                return "Enter your password to confirm account deletion."
             }
         }
     }
 }
+
 

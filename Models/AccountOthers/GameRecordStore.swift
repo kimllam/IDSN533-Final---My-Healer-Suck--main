@@ -162,6 +162,24 @@ final class GameRecordStore: ObservableObject {
         listenerUserID = nil
     }
 
+    // MARK: - Account Deletion Support
+
+    func suspendSyncForAccountDeletion() {
+        // Stop snapshot-driven uploads while deleting cloud battle documents.
+        stopListening()
+        endBattleSession()
+    }
+
+    func removeDeletedAccountCache(uid: String) {
+        stopListening()
+        endBattleSession()
+        UserDefaults.standard.removeObject(forKey: localStorageKey(for: uid))
+        loadedUserID = nil
+        uploadedOrQueuedIDs.removeAll()
+        battles = []
+        syncError = nil
+    }
+
     // MARK: - Recording
 
     func record(didWin: Bool, rounds: Int, survivingIdiots: Int) {
@@ -293,4 +311,5 @@ enum BattleAchievement: String, CaseIterable, Identifiable {
         }
     }
 }
+
 
