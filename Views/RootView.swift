@@ -1,46 +1,54 @@
+//
+//  RootView.swift
+//  IDSN533 MyHealerSuck
+//
+//  Created by Kim Lam on 11/25/26.
+//
+
 import SwiftUI
 import FirebaseAuth
 
 struct RootView: View {
-
-    @Environment(\.scenePhase)
-    private var scenePhase
-
-    @AppStorage("hasSeenOnboarding")
-    private var hasSeenOnboarding = false
-
-    @AppStorage("entryMode")
-    private var entryMode = ""
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("entryMode") private var entryMode = ""
 
     @State private var justFinishedOnboarding = false
     @State private var isAuthenticated = false
     @State private var isGuest = false
-
-    @State private var authListenerHandle:
-        AuthStateDidChangeListenerHandle?
+    @State private var isRestoringSession = true
+    @State private var authListenerHandle: AuthStateDidChangeListenerHandle?
 
     var body: some View {
         Group {
             if !hasSeenOnboarding {
-                OnboardingComicView(
-                    onFinish: {
-                        hasSeenOnboarding = true
-                        justFinishedOnboarding = true
-                        isGuest = false
-                        entryMode = ""
-                    }
-                )
+                OnboardingComicView(onFinish: {
+                    hasSeenOnboarding = true
+                    justFinishedOnboarding = true
+                    isGuest = false
+                    entryMode = ""
+                })
+            } else if isRestoringSession {
+                // Keep the launch artwork visible until the saved session is resolved.
+                Image("landing")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea()
+                    .clipped()
             } else if justFinishedOnboarding {
                 NavigationStack {
                     AuthView(
                         mode: .logIn,
                         onAuthenticated: {
                             justFinishedOnboarding = false
-                            finishAccountLogin()
+                            if Auth.auth().currentUser?.isEmailVerified == true {
+                                isAuthenticated = true
+                                isGuest = false
+                            }
                         },
                         onPlayAsGuest: {
                             justFinishedOnboarding = false
-                            enterGuestMode()
+                            isGuest = true
                         }
                     )
                 }
@@ -50,7 +58,6 @@ struct RootView: View {
                         isGuest: isGuest,
                         onExitGuest: {
                             isGuest = false
-
                             if entryMode == "guest" {
                                 entryMode = ""
                             }
@@ -62,63 +69,60 @@ struct RootView: View {
                     AuthView(
                         mode: .logIn,
                         onAuthenticated: {
-                            finishAccountLogin()
+                            if Auth.auth().currentUser?.isEmailVerified == true {
+                                isAuthenticated = true
+                                isGuest = false
+                            }
                         },
                         onPlayAsGuest: {
-                            enterGuestMode()
+                            isGuest = true
                         }
                     )
                 }
             }
         }
-        .animation(
-            .easeInOut(duration: 0.25),
-            value: justFinishedOnboarding
-        )
-        .animation(
-            .easeInOut(duration: 0.25),
-            value: isAuthenticated || isGuest
-        )
-        .onChange(
-            of: scenePhase,
-            initial: true
-        ) { _, phase in
-            AudioManager.shared.setApplicationActive(
-                phase == .active
-            )
-        }
+        .animation(.easeInOut(duration: 0.25), value: justFinishedOnboarding)
         .onAppear {
-            AudioManager.shared.setApplicationActive(
-                scenePhase == .active
-            )
-
-            updateEntryState()
-
-            guard authListenerHandle == nil else {
-                return
+            // Restore an explicitly selected guest session without mixing account data.
+            if entryMode == "guest" {
+                isGuest = true
+                isAuthenticated = false
+                isRestoringSession = false
             }
-
-            authListenerHandle = Auth.auth()
-                .addStateDidChangeListener { _, user in
-                    if entryMode == "guest" {
-                        isAuthenticated = false
-                        isGuest = true
-                    } else if let user, user.isEmailVerified {
-                        entryMode = "account"
-                        isAuthenticated = true
-                        isGuest = false
-                    } else {
-                        isAuthenticated = false
-                        isGuest = false
-
-                        if entryMode == "account" {
-                            entryMode = ""
-                        }
-                    }
+            guard authListenerHandle == nil else { return }
+            authListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
+                if entryMode == "guest" {
+                    isAuthenticated = false
+                    isGuest = true
+                } else if let user, user.isEmailVerified {
+                    entryMode = "account"
+                    isAuthenticated = true
+                    isGuest = false
+                } else {
+                    isAuthenticated = false
+                    isGuest = false
+                    if entryMode == "account" { entryMode = "" }
                 }
+                // The initial route is now known. Do not animate the restoration.
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    isRestoringSession = false
+                }
+            }
         }
-        .onChange(of: entryMode) { _, _ in
-            updateEntryState()
+        .onChange(of: entryMode) { _, newMode in
+            if newMode == "guest" {
+                isGuest = true
+                isAuthenticated = false
+            } else if newMode == "account",
+                      Auth.auth().currentUser?.isEmailVerified == true {
+                isAuthenticated = true
+                isGuest = false
+            } else if newMode.isEmpty {
+                isAuthenticated = false
+                isGuest = false
+            }
         }
         .onDisappear {
             if let handle = authListenerHandle {
@@ -127,40 +131,5 @@ struct RootView: View {
             }
         }
     }
-
-    // MARK: - Account Login
-
-    private func finishAccountLogin() {
-        guard Auth.auth().currentUser?.isEmailVerified == true else {
-            return
-        }
-
-        entryMode = "account"
-        isAuthenticated = true
-        isGuest = false
-    }
-
-    // MARK: - Guest Login
-
-    private func enterGuestMode() {
-        entryMode = "guest"
-        isGuest = true
-        isAuthenticated = false
-    }
-
-    // MARK: - Restore Entry State
-
-    private func updateEntryState() {
-        if entryMode == "guest" {
-            isGuest = true
-            isAuthenticated = false
-        } else if entryMode == "account",
-                  Auth.auth().currentUser?.isEmailVerified == true {
-            isAuthenticated = true
-            isGuest = false
-        } else {
-            isAuthenticated = false
-            isGuest = false
-        }
-    }
 }
+
